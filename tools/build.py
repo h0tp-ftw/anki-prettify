@@ -52,28 +52,18 @@ except KeyError:
     last_rel_ver = semver_regex.search(s).group()  # type:ignore
 
 # Get the new version number
-try:
-    new_ver = sys.argv[1]
-    if re.fullmatch(semver_regex, new_ver) is None:
-        print(
-            f"Warning: Invalid version number. Using latest release version: {last_rel_ver}"
-        )
-    else:
-        print(f"Building with version {new_ver}")
-except IndexError:
-    print(
-        f"Warning: New version not provided. Using latest release version: {last_rel_ver}"
-    )
-    new_ver = last_rel_ver  # Default to last release version if not provided
+new_ver = sys.argv[1] if len(sys.argv) > 1 else "1.0"
+print(f"Building with version {new_ver}")
 
 # Update version number in SCSS files
 if new_ver != last_rel_ver:
     for x in root.glob("**/scss/*.scss"):
         with x.open("r+") as f:
             s = f.read()
-            s = re.sub(semver_regex, new_ver, s)
+            s = re.sub(r"Version: \d+(\.\d+)+", f"Version: {new_ver}", s)
             f.seek(0)
             f.write(s)
+            f.truncate()
     print("Updated version in SCSS files")
 
 # Compile SCSS to CSS
@@ -113,7 +103,14 @@ with open(root / "tools" / "ids.json", "r+") as ids_file:
 # Generate deck packages
 decks = {}
 
-for t in ids:
+# Process only the 'nord' theme
+themes_to_build = ['nord']
+
+for t in themes_to_build:
+    if t not in ids:
+        print(f"Warning: Theme '{t}' not found in ids.json. Skipping.")
+        continue
+
     for n in ids[t]:
         with open(
             (root / "src" / "templates" / "default" / n / f"{n}-front.html"),
@@ -127,14 +124,17 @@ for t in ids:
 
             # Update version number in templates
             if new_ver != last_rel_ver:
-                front_html = re.sub(semver_regex, new_ver, front_html)
-                back_html = re.sub(semver_regex, new_ver, back_html)
+                front_html = re.sub(r"Version: \d+(\.\d+)+", f"Version: {new_ver}", front_html)
+                back_html = re.sub(r"Version: \d+(\.\d+)+", f"Version: {new_ver}", back_html)
 
                 f1.seek(0)
                 f2.seek(0)
 
                 f1.write(front_html)
                 f2.write(back_html)
+
+                f1.truncate()
+                f2.truncate()
 
         if n == "basic_reverse":
             # Basic reverse requires two card templates
@@ -147,9 +147,7 @@ for t in ids:
                 {
                     "name": "Card 2",
                     "qfmt": front_html.replace("{{edit:Front}}", "{{edit:Back}}"),
-                    "afmt": back_html.replace(
-                        "{{edit:Back}}", "{{edit:Front}}"
-                    ).replace("{{edit:Front}}", "{{edit:Back}}", 1),
+                    "afmt": back_html.replace("{{edit:Front}}", "{{edit:Back}}").replace("{{Back}}", "{{Front}}"),
                 },
             ]
         else:
@@ -173,9 +171,15 @@ for t in ids:
             },
         ]
 
+        TYPE_NAMES = {
+            "basic": "Basic",
+            "basic_reverse": "Reverse",
+            "cloze": "Cloze",
+        }
+
         model = genanki.Model(
             model_id=ids[t][n]["model_id"],
-            name=f"prettify-{t}-{n}",
+            name=f"Prettify {TYPE_NAMES.get(n, n)} v{new_ver} (h0tp's mod)",
             fields=model_fields,
             templates=templates,
             css=css,
@@ -212,7 +216,7 @@ for t in ids:
     # Theme-wise packages
     genanki.Package(decks[t]).write_to_file(root / "themes" / t / f"prettify-{t}.apkg")
 
-# Master package with all the themes
+# Master package with only the 'nord' theme
 genanki.Package([d for x in decks.values() for d in x]).write_to_file(
     root / "prettify.apkg"
 )

@@ -1,6 +1,19 @@
-/* Prettify by @pranavdeshai: Nord
+/* Prettify Mod by @h0tp, based on Prettify by @pranavdeshai (CSS)
 
-Version: 0.1.3
+- Nord
+- Catppuccin
+
+Version: 1.0, based on Prettify 0.1.1
+
+Changelog:
+- modified colors to fit dark mode, including no blue shades
+- card hover zoom, click for full image 
+- contrast toggle for poor contrast or transparent images
+- auto text contrast for text with poor contrast, e.g. black text in dark moe card will become white
+- excessive whitespace is auto removed
+- beautiful tags and deck breadcrumbs
+- beautiful animations
+
 Readme: https://github.com/pranavdeshai/anki-prettify
 Links:
 - Reddit: https://www.reddit.com/user/Various_Breadfruit48
@@ -8,19 +21,120 @@ Links:
 - Buy Me a Coffee: https://www.buymeacoffee.com/pranavdeshai
 - Ko-fi: https://ko-fi.com/pranavdeshai
 
+*/
 /* -------------------------------------------------- PREFERENCES */
 :root {
   --card-max-width: 40em;
   --card-text-align: left;
-  --font-size-regular: 16px;
-  --font-size-small: 14px;
-  --font-family: "Rubik", -apple-system, sytem-ui, BlinkMacSystemFont, Segoe UI,
+  --font-size-regular: 18px;
+  --font-size-small: 16px;
+  --font-family: "Arial", -apple-system, system-ui, BlinkMacSystemFont, Segoe UI,
     Roboto, Helvetica, Arial, sans-serif;
   --img-width: 50%;
   --img-brightness: 1;
   --img-filter: none;
+  /* Enhanced Catppuccin Color Variables - Latte & Mocha Palettes */
+  --ctp-latte-rosewater: #dc8a78;
+  --ctp-latte-flamingo: #dd7878;
+  --ctp-latte-pink: #ea76cb;
+  --ctp-latte-mauve: #8839ef;
+  --ctp-latte-red: #d20f39;
+  --ctp-latte-maroon: #e64553;
+  --ctp-latte-peach: #fe640b;
+  --ctp-latte-yellow: #df8e1d;
+  --ctp-latte-green: #40a02b;
+  --ctp-latte-teal: #179299;
+  --ctp-latte-sky: #04a5e5;
+  --ctp-latte-sapphire: #209fb5;
+  --ctp-latte-blue: #1e66f5;
+  --ctp-latte-lavender: #7287fd;
+  --ctp-mocha-rosewater: #f5e0dc;
+  --ctp-mocha-flamingo: #f2cdcd;
+  --ctp-mocha-pink: #f5c2e7;
+  --ctp-mocha-mauve: #cba6f7;
+  --ctp-mocha-red: #f38ba8;
+  --ctp-mocha-maroon: #eba0ac;
+  --ctp-mocha-peach: #fab387;
+  --ctp-mocha-yellow: #f9e2af;
+  --ctp-mocha-green: #a6e3a1;
+  --ctp-mocha-teal: #94e2d5;
+  --ctp-mocha-sky: #89dceb;
+  --ctp-mocha-sapphire: #74c7ec;
+  --ctp-mocha-blue: #89b4fa;
+  --ctp-mocha-lavender: #b4befe;
+  /* Optimized design variables */
+  --border-radius-small: 0.375rem;
+  --border-radius-medium: 0.5rem;
+  --border-radius-large: 0.75rem;
+  --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-standard: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-strong: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
+/* -------------------------------------------------- NEW CARD ONLY ANIMATIONS */
+@keyframes breadcrumb-entrance {
+  0% {
+    opacity: 0;
+    transform: translateX(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes tag-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes divider-reveal {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scaleX(1);
+  }
+}
+@keyframes field-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes enhanced-catppuccin-pulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.01);
+  }
+}
+@keyframes enhanced-catppuccin-pulse-dark {
+  0%, 100% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.01);
+  }
+}
 /* -------------------------------------------------- COLORS */
 .card {
   /* Light theme */
@@ -38,192 +152,677 @@ Links:
   --tag-bg-active: transparent;
   --tag-border: #d8dee9;
   --tag-border-active: #8fbcbb;
-  --cloze-fg: #88c0d0;
-  --cloze-bg: transparent;
+  --cloze-fg: #2e3440;
+  --cloze-bg: linear-gradient(135deg, rgba(220, 138, 120, 0.25), rgba(234, 118, 203, 0.25));
+  --cloze-border: rgba(220, 138, 120, 0.6);
+  --cloze-shadow: rgba(234, 118, 203, 0.3);
   --link-fg: #81a1c1;
   --link-bg: transparent;
   --link-fg-active: #8fbcbb;
-  --link-bg-active: #eceff4;
-  --bold-fg: #bf616a;
-  --italic-fg: #ebcb8b;
+  --link-bg-active: #434c5e;
+  --bold-fg: #ff7b7b;
+  --italic-fg: #ffdfba;
   --bold-italic-fg: #d08770;
-  --underline-fg: #a3be8c;
+  --underline-fg: #8bd5ca;
+  /* Enhanced Catppuccin deck colors */
+  --deck-primary: #dc8a78;
+  --deck-secondary: #ea76cb;
 }
 
 .card.night_mode {
   /* Dark theme */
-  background-color: #242933;
-  --text-fg: #e7e9f0;
+  background-color: #2e3440;
+  --text-fg: #eceff4;
   --text-fg-faint: #d8dee9;
-  --text-bg-selected: #3b4252;
-  --card-bg: #2e3440;
-  --card-border: transparent;
-  --card-box-shadow: #0f111540;
-  --divider: #4c566a;
+  --text-bg-selected: #434c5e;
+  --card-bg: #3b4252;
+  --card-border: rgba(136, 192, 208, 0.1);
+  --card-box-shadow: #2e344040;
+  --divider: #e5e9f0;
   --tag-fg: #d8dee9;
   --tag-bg: transparent;
   --tag-fg-active: #8fbcbb;
   --tag-bg-active: transparent;
   --tag-border: #4c566a;
   --tag-border-active: #8fbcbb;
-  --cloze-fg: #88c0d0;
-  --cloze-bg: transparent;
-  --link-fg: #81a1c1;
+  --cloze-fg: #f2b5b5;
+  --cloze-bg: linear-gradient(135deg, rgba(245, 224, 220, 0.15), rgba(245, 194, 231, 0.15));
+  --cloze-border: rgba(245, 224, 220, 0.5);
+  --cloze-shadow: rgba(245, 194, 231, 0.2);
+  --link-fg: #88c0d0;
   --link-bg: transparent;
   --link-fg-active: #8fbcbb;
   --link-bg-active: #434c5e;
-  --bold-fg: #bf616a;
-  --italic-fg: #ebcb8b;
+  --bold-fg: #FD95A4;
+  --italic-fg: #F9CCB3;
   --bold-italic-fg: #d08770;
-  --underline-fg: #a3be8c;
+  --underline-fg: #8CE3D6;
+  /* Enhanced Catppuccin deck colors for dark theme */
+  --deck-primary: #f5e0dc;
+  --deck-secondary: #f5c2e7;
 }
 
 /* -------------------------------------------------- BACKGROUND */
 .card {
   cursor: default;
   padding: 0.5em 0;
+  outline: none;
+  overflow: visible;
 }
+
 html:not(.mobile) .card {
   padding: 0.5em;
 }
+
 .card::-webkit-scrollbar {
   display: none;
 }
 
-/* -------------------------------------------------- FLASHCARD */
-.prettify-flashcard {
+/* Ensure body can scroll with keyboard */
+body {
+  overflow-y: auto !important;
+}
+
+/* -------------------------------------------------- OPTIMIZED FLASHCARD */
+#qa .prettify-flashcard {
   background-color: var(--card-bg);
-  border-radius: 0.5em;
+  border-radius: var(--border-radius-large);
   border: 1px solid var(--card-border);
-  box-shadow: var(--card-box-shadow) 0px 4px 6px;
+  box-shadow: var(--shadow-medium);
   color: var(--text-fg);
   font-family: var(--font-family);
   font-size: var(--font-size-regular);
-  line-height: 1.5;
+  line-height: 1.6;
   margin: 0 auto;
   max-width: var(--card-max-width);
   text-align: var(--card-text-align);
   word-wrap: break-word;
+  transition: var(--transition-standard);
+  position: relative;
+  overflow: visible;
+  display: flow-root;
+  opacity: 1;
+  transform: translateY(0);
 }
+
+.prettify-flashcard:hover {
+  box-shadow: var(--shadow-strong);
+  transform: translateY(-2px);
+}
+
 .prettify-flashcard ::selection {
   background-color: var(--text-bg-selected);
 }
 
+/* Enhanced dark mode card styling */
+.card.night_mode #qa .prettify-flashcard {
+  box-shadow: rgba(46, 52, 64, 0.4) 0px 8px 20px, rgba(136, 192, 208, 0.08) 0px 0px 0px 1px;
+}
+
+.card.night_mode .prettify-flashcard:hover {
+  box-shadow: rgba(46, 52, 64, 0.5) 0px 12px 30px, rgba(136, 192, 208, 0.12) 0px 0px 0px 1px;
+}
+
+/* Enhanced focus indicators */
+.prettify-flashcard:focus-within {
+  outline: 2px solid var(--ctp-latte-teal);
+  outline-offset: 2px;
+}
+
+.card.night_mode .prettify-flashcard:focus-within {
+  outline: 2px solid #8fbcbb;
+  outline-offset: 2px;
+}
+
+/* -------------------------------------------------- IMPROVED TEXT CONTRAST */
+.prettify-flashcard {
+  color: var(--text-fg) !important;
+}
+
+.prettify-flashcard * {
+  color: inherit !important;
+}
+
+/* Override Anki's default text styling */
+.prettify-field p,
+.prettify-field div,
+.prettify-field span {
+  color: var(--text-fg) !important;
+}
+
+/* Improved handling for user-formatted text colors - NO BACKGROUND */
+.prettify-field [style*=color] {
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8), -1px -1px 2px rgba(255, 255, 255, 0.8), 1px -1px 2px rgba(255, 255, 255, 0.8), -1px 1px 2px rgba(255, 255, 255, 0.8) !important;
+  font-weight: 500 !important;
+}
+
+/* Dark mode text shadow for better contrast */
+.card.night_mode .prettify-field [style*=color] {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9), -1px -1px 2px rgba(0, 0, 0, 0.9), 1px -1px 2px rgba(0, 0, 0, 0.9), -1px 1px 2px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Ensure extremely poor contrast gets subtle color override */
+.card:not(.night_mode) .prettify-field [style*="color: black"],
+.card:not(.night_mode) .prettify-field [style*="color: #000"] {
+  color: var(--text-fg) !important;
+}
+
+.card.night_mode .prettify-field [style*="color: white"],
+.card.night_mode .prettify-field [style*="color: #fff"] {
+  color: var(--text-fg) !important;
+}
+
 /* -------------------------------------------------- FIELDS */
 .prettify-field {
-  margin: 2em;
+  margin: 0.8em 2em 2em 2em;
+  transition: var(--transition-fast);
 }
+
 .mobile .prettify-field {
-  margin: 1em;
+  margin: 0.6em 1em 1em 1em;
 }
 
 .prettify-field--back {
   color: var(--text-fg-faint);
   font-size: var(--font-size-small);
+  border-top: 1px solid var(--divider);
+  padding-top: 1.5em;
+  margin-top: 1.5em;
+  opacity: 0;
+  transform: translateY(8px);
 }
 
-/* -------------------------------------------------- CLOZE */
+/* -------------------------------------------------- ENHANCED CATPPUCCIN CLOZE HIGHLIGHTING */
+/* Base cloze styling with enhanced visibility */
 .cloze {
-  background-color: var(--cloze-bg);
+  background: var(--cloze-bg);
   color: var(--cloze-fg);
+  border: 1px solid var(--cloze-border);
+  border-radius: var(--border-radius-small);
+  padding: 0.15rem 0.4rem;
+  box-shadow: 0 2px 6px var(--cloze-shadow);
+  transition: var(--transition-fast);
+  font-weight: 500;
+  position: relative;
+  display: inline;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  line-height: 1.4;
+  word-break: break-word;
+  white-space: normal;
 }
 
-/* -------------------------------------------------- DECK */
-.prettify-deck {
-  margin: 2em;
-  display: flex;
-  color: var(--text-fg-faint);
-  font-size: var(--font-size-small);
-  white-space: nowrap;
+/* Front field cloze - Enhanced prominence with higher opacity */
+.prettify-field--front .cloze,
+#qa .prettify-flashcard .prettify-field--front .cloze {
+  opacity: 0.85 !important;
+  background: linear-gradient(135deg, rgba(220, 138, 120, 0.2), rgba(234, 118, 203, 0.2)) !important;
+  border: 1px dashed rgba(220, 138, 120, 0.7) !important;
+  font-weight: 500 !important;
+  animation: enhanced-catppuccin-pulse 3s ease-in-out infinite !important;
 }
+
+/* Hover effect for front field cloze */
+.prettify-field--front .cloze:hover,
+#qa .prettify-flashcard .prettify-field--front .cloze:hover {
+  opacity: 1 !important;
+  background: linear-gradient(135deg, rgba(220, 138, 120, 0.3), rgba(234, 118, 203, 0.3)) !important;
+  border-color: rgba(234, 118, 203, 0.8) !important;
+  transform: translateY(-1px) scale(1.01) !important;
+  animation: none !important;
+  box-shadow: 0 4px 12px rgba(234, 118, 203, 0.2) !important;
+}
+
+/* Back field cloze - Full opacity with enhanced visibility */
+.prettify-field--back .cloze,
+#qa .prettify-flashcard .prettify-field--back .cloze {
+  opacity: 1 !important;
+  background: linear-gradient(135deg, rgba(220, 138, 120, 0.35), rgba(234, 118, 203, 0.35)) !important;
+  border: 1px solid rgba(220, 138, 120, 0.8) !important;
+  font-weight: 600 !important;
+  animation: none !important;
+}
+
+.prettify-field--back .cloze:hover,
+#qa .prettify-flashcard .prettify-field--back .cloze:hover {
+  opacity: 1 !important;
+  background: linear-gradient(135deg, rgba(220, 138, 120, 0.45), rgba(234, 118, 203, 0.45)) !important;
+  border-color: rgba(234, 118, 203, 0.9) !important;
+  transform: translateY(-1px) scale(1.005);
+  box-shadow: 0 4px 12px rgba(234, 118, 203, 0.15) !important;
+}
+
+/* Dark mode enhanced cloze styling with improved colors */
+.card.night_mode .prettify-field--front .cloze,
+.card.night_mode #qa .prettify-flashcard .prettify-field--front .cloze {
+  opacity: 0.9 !important;
+  color: #f2b5b5 !important;
+  background: linear-gradient(135deg, rgba(245, 224, 220, 0.15), rgba(245, 194, 231, 0.15)) !important;
+  border: 1px dashed rgba(245, 224, 220, 0.6) !important;
+  animation: enhanced-catppuccin-pulse-dark 2.5s ease-in-out infinite !important;
+}
+
+/* Dark mode hover effect */
+.card.night_mode .prettify-field--front .cloze:hover,
+.card.night_mode #qa .prettify-flashcard .prettify-field--front .cloze:hover {
+  opacity: 1 !important;
+  color: #f5c2c2 !important;
+  background: linear-gradient(135deg, rgba(245, 224, 220, 0.25), rgba(245, 194, 231, 0.25)) !important;
+  border-color: rgba(245, 194, 231, 0.8) !important;
+  transform: translateY(-1px) scale(1.01) !important;
+  animation: none !important;
+  box-shadow: 0 4px 12px rgba(245, 194, 231, 0.15) !important;
+}
+
+/* Dark mode back field cloze */
+.card.night_mode .prettify-field--back .cloze,
+.card.night_mode #qa .prettify-flashcard .prettify-field--back .cloze {
+  opacity: 1 !important;
+  color: #f2b5b5 !important;
+  background: linear-gradient(135deg, rgba(245, 224, 220, 0.25), rgba(245, 194, 231, 0.25)) !important;
+  border: 1px solid rgba(245, 224, 220, 0.7) !important;
+  animation: none !important;
+}
+
+/* Ensure proper spacing around cloze deletions */
+.cloze::before,
+.cloze::after {
+  content: "";
+  display: inline-block;
+  width: 0;
+}
+
+/* -------------------------------------------------- BEAUTIFUL BREADCRUMBS WITH NEW CARD ONLY ANIMATIONS */
+.prettify-deck {
+  border-bottom: 1px solid transparent;
+  margin: 2em 2em 0.2em 2em !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  color: var(--text-fg-faint);
+  font-size: 13px !important;
+  gap: 0.6rem !important;
+  line-height: 1.3;
+}
+
 .mobile .prettify-deck {
-  margin: 1em;
+  margin: 1.5em 0.8em 0.2em 0.8em !important;
+  font-size: 11px !important;
 }
 
 .prettify-subdeck {
-  text-decoration: underline;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  background: linear-gradient(135deg, rgba(220, 138, 120, 0.08), rgba(234, 118, 203, 0.08)) !important;
+  color: var(--deck-primary) !important;
+  padding: 0.3rem 0.8rem !important;
+  border-radius: 1.2rem !important;
+  font-weight: 500 !important;
+  border: 1.5px solid rgba(220, 138, 120, 0.3) !important;
+  transition: var(--transition-fast);
+  text-decoration: none;
+  display: inline-block !important;
+  cursor: pointer;
+  font-size: inherit;
+  position: relative;
+  opacity: 1;
+  transform: translateX(0);
 }
 
-/* -------------------------------------------------- TAGS */
-.prettify-tags {
-  margin: 2em;
-  display: flex;
-  flex-flow: row wrap;
-  font-size: var(--font-size-small);
+/* Animation only applied when style attribute with animation-delay is present */
+.prettify-subdeck[style*=animation-delay] {
+  opacity: 0;
+  transform: translateX(-5px);
+  animation: breadcrumb-entrance 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+.prettify-subdeck--secondary {
+  background: linear-gradient(135deg, rgba(234, 118, 203, 0.08), rgba(220, 138, 120, 0.08)) !important;
+  color: var(--deck-secondary) !important;
+  border-color: rgba(234, 118, 203, 0.3) !important;
+}
+
+/* Enhanced dark mode breadcrumbs */
+.card.night_mode .prettify-subdeck {
+  background: linear-gradient(135deg, rgba(245, 224, 220, 0.06), rgba(245, 194, 231, 0.06)) !important;
+  color: var(--deck-primary) !important;
+  border-color: rgba(245, 224, 220, 0.25) !important;
+}
+
+.card.night_mode .prettify-subdeck--secondary {
+  background: linear-gradient(135deg, rgba(245, 194, 231, 0.06), rgba(245, 224, 220, 0.06)) !important;
+  color: var(--deck-secondary) !important;
+  border-color: rgba(245, 194, 231, 0.25) !important;
+}
+
+.prettify-subdeck:hover {
+  background: linear-gradient(135deg, rgba(220, 138, 120, 0.15), rgba(234, 118, 203, 0.15)) !important;
+  border-color: rgba(220, 138, 120, 0.5) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 138, 120, 0.2);
+}
+
+.prettify-subdeck--secondary:hover {
+  background: linear-gradient(135deg, rgba(234, 118, 203, 0.15), rgba(220, 138, 120, 0.15)) !important;
+  border-color: rgba(234, 118, 203, 0.5) !important;
+  box-shadow: 0 4px 12px rgba(234, 118, 203, 0.2);
+}
+
+.card.night_mode .prettify-subdeck:hover {
+  background: linear-gradient(135deg, rgba(245, 224, 220, 0.12), rgba(245, 194, 231, 0.12)) !important;
+  border-color: rgba(245, 224, 220, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(245, 224, 220, 0.15);
+}
+
+.card.night_mode .prettify-subdeck--secondary:hover {
+  background: linear-gradient(135deg, rgba(245, 194, 231, 0.12), rgba(245, 224, 220, 0.12)) !important;
+  border-color: rgba(245, 194, 231, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(245, 194, 231, 0.15);
+}
+
+/* Enhanced arrow separator with improved hover effect */
+.deck-separator {
+  color: var(--deck-primary) !important;
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  margin: 0 !important;
+  transition: var(--transition-fast) !important;
+  opacity: 0.85 !important;
+  cursor: pointer;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  position: relative;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.deck-separator:hover {
+  color: var(--deck-secondary) !important;
+  transform: scale(1.2) translateX(2px) !important;
+  opacity: 1 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced dark mode arrows with proper visibility */
+.card.night_mode .deck-separator {
+  color: var(--deck-primary) !important;
+  opacity: 0.9 !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.card.night_mode .deck-separator:hover {
+  color: var(--deck-secondary) !important;
+  opacity: 1 !important;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+/* -------------------------------------------------- OPTIMIZED MODERN TAGS WITH NEW CARD ONLY ANIMATIONS */
+.prettify-tags {
+  margin: 1.5em 2em !important;
+  display: flex !important;
+  flex-flow: row wrap !important;
+  font-size: 12px !important;
+  gap: 0.2rem !important;
+}
+
 .mobile .prettify-tags {
-  margin: 1em;
+  margin: 1em !important;
 }
 
 .prettify-tag {
   all: initial;
-  background-color: var(--tag-bg);
-  border-radius: 0.25em;
-  border: 1px solid var(--tag-border);
-  color: var(--tag-fg);
-  display: inline;
-  font-size: var(--font-size-small);
+  background: linear-gradient(135deg, rgba(139, 188, 187, 0.1), rgba(139, 188, 187, 0.15)) !important;
+  border-radius: 0.8em !important;
+  border: 1px solid rgba(139, 188, 187, 0.3) !important;
+  color: var(--tag-fg) !important;
+  display: inline-block !important;
+  font-size: 14px !important;
   font-family: var(--font-family);
-  font-style: italic;
-  margin: 0 0.5em 0.5em 0;
-  padding: 0.25em;
-  transition: all 0.25s;
+  font-style: normal;
+  font-weight: 500;
+  margin: 0 0.25em 0.25em 0 !important;
+  padding: 0.3em 0.7em !important;
+  transition: var(--transition-fast);
   word-break: break-word;
-}
-.prettify-tag:hover {
-  background-color: var(--tag-bg-active);
-  border: 1px solid var(--tag-border-active);
-  color: var(--tag-fg-active);
+  position: relative;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(139, 188, 187, 0.1) !important;
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* -------------------------------------------------- DIVIDER */
-.prettify-divider {
-  background-color: transparent;
-  border: none;
-  border-bottom: 1px dashed var(--divider);
-  margin: 1em;
-  padding: 0;
+/* Animation only applied when style attribute with animation-delay is present */
+.prettify-tag[style*=animation-delay] {
+  opacity: 0;
+  transform: translateY(5px);
+  animation: tag-entrance 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.prettify-divider--answer {
-  border-bottom: 1px solid var(--divider);
+.prettify-tag:hover {
+  background: linear-gradient(135deg, rgba(139, 188, 187, 0.2), rgba(139, 188, 187, 0.3)) !important;
+  border-color: rgba(139, 188, 187, 0.6) !important;
+  color: var(--tag-fg-active) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 188, 187, 0.2) !important;
 }
 
-/* -------------------------------------------------- IMAGES */
-img {
-  border-radius: 0.25em;
+/* Enhanced dark mode tags */
+.card.night_mode .prettify-tag {
+  background: linear-gradient(135deg, rgba(143, 188, 187, 0.08), rgba(143, 188, 187, 0.12)) !important;
+  border-color: rgba(143, 188, 187, 0.25) !important;
+  color: var(--tag-fg) !important;
+  box-shadow: 0 1px 2px rgba(143, 188, 187, 0.08) !important;
+}
+
+.card.night_mode .prettify-tag:hover {
+  background: linear-gradient(135deg, rgba(143, 188, 187, 0.15), rgba(143, 188, 187, 0.2)) !important;
+  border-color: rgba(143, 188, 187, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(143, 188, 187, 0.15) !important;
+}
+
+/* Enhanced tag tooltips */
+.tag-tooltip {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-bg);
+  color: var(--text-fg);
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--border-radius-medium);
+  border: 1px solid var(--tag-border);
+  box-shadow: var(--shadow-medium);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition-fast);
+  z-index: 1000;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.tag-tooltip .tag-arrow {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0 0.2em;
+  color: #dc8a78;
+  vertical-align: middle;
+}
+
+.prettify-tag:hover .tag-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+/* Put this anywhere after the original rules */
+.prettify-deck {
+  margin-bottom: 2em !important;
+}
+
+/* -------------------------------------------------- FIXED FULLSCREEN IMAGE ZOOM */
+#qa img {
+  border-radius: var(--border-radius-medium);
   display: block;
   margin: 1em auto;
   max-width: var(--img-width) !important;
-  transition: max-width 0.25s 0.1s, opacity 0.25s 0.1s, filter 0.1s, transform 0s;
+  transition: var(--transition-fast);
+  cursor: zoom-in;
+  position: relative;
+  z-index: 1;
+  box-shadow: none !important;
 }
-.night_mode img {
+
+/* Light mode - clean image styling with no shadows */
+.card:not(.night_mode) #qa img {
+  box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Dark mode image styling */
+.card.night_mode #qa img {
+  box-shadow: rgba(46, 52, 64, 0.2) 0 2px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Smooth baseline hover zoom */
+#qa img:hover:not([data-zoom-level="3"]):not(.zoomed) {
+  transform: scale(1.2);
+  cursor: zoom-in;
+}
+
+.card:not(.night_mode) #qa img:hover:not([data-zoom-level="3"]):not(.zoomed) {
+  box-shadow: none !important;
+}
+
+.card.night_mode #qa img:hover:not([data-zoom-level="3"]):not(.zoomed) {
+  box-shadow: rgba(46, 52, 64, 0.3) 0 4px 12px;
+}
+
+/* Fixed 4-stage zoom system */
+#qa img[data-zoom-level="1"] {
+  max-width: 65% !important;
+  cursor: zoom-in;
+  transform: scale(1.2) !important;
+  z-index: 10;
+  transition: var(--transition-fast);
+}
+
+#qa img[data-zoom-level="2"] {
+  max-width: 80% !important;
+  cursor: zoom-in;
+  transform: scale(1.4) !important;
+  z-index: 20;
+  transition: var(--transition-fast);
+}
+
+/* Fullscreen clones handled by JavaScript - no CSS needed for zoom level 3 */
+/* Night mode image adjustments */
+.night_mode img:not([data-zoom-level="3"]) {
   filter: var(--img-filter);
   opacity: var(--img-brightness);
 }
-img:hover {
-  cursor: zoom-in;
-  filter: none;
-  max-width: 100% !important;
-  opacity: 1;
-}
+
 img + br {
   display: none;
 }
-html:not(.mobile) img:active {
-  border: 1px solid var(--link-fg-active);
-  cursor: zoom-out;
-  filter: none;
-  left: 0;
-  max-width: 95% !important;
-  opacity: 1;
+
+/* Fixed Image Zoom Backdrop */
+.image-zoom-backdrop {
   position: fixed;
   top: 0;
-  transform: translate(calc(50vw - 50%), calc(50vh - 50%));
-  z-index: 100;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.15s ease !important;
+  cursor: zoom-out;
+  display: none;
+  pointer-events: none;
+}
+
+.card.night_mode .image-zoom-backdrop {
+  background-color: rgba(46, 52, 64, 0.95);
+}
+
+.image-zoom-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+  display: block;
+}
+
+.image-zoom-backdrop:not(.active) {
+  pointer-events: none;
+  display: none;
+}
+
+/* Ensure fullscreen images display properly */
+[data-is-fullscreen-clone=true] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* -------------------------------------------------- SIMPLIFIED CONTRAST TOGGLE */
+.low-contrast-image {
+  transition: var(--transition-fast) !important;
+}
+
+/* Simple, clean contrast toggle button */
+.contrast-toggle {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  background: var(--card-bg) !important;
+  border: 2px solid var(--deck-primary) !important;
+  border-radius: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  opacity: 0.8;
+  transition: var(--transition-fast) !important;
+  z-index: 200 !important;
+  color: var(--deck-primary) !important;
+  box-shadow: var(--shadow-subtle) !important;
+  user-select: none;
+}
+
+.contrast-toggle:hover {
+  opacity: 1;
+  background: var(--deck-primary) !important;
+  color: white !important;
+  border-color: var(--deck-primary) !important;
+}
+
+.contrast-toggle.active {
+  background: var(--deck-primary) !important;
+  color: white !important;
+  opacity: 1;
+  border-color: var(--deck-primary) !important;
+}
+
+.contrast-toggle svg {
+  transition: var(--transition-fast);
+}
+
+/* Enhanced dark mode contrast toggle */
+.card.night_mode .contrast-toggle {
+  box-shadow: rgba(46, 52, 64, 0.3) 0 2px 8px !important;
+}
+
+.card.night_mode .contrast-toggle:hover {
+  box-shadow: rgba(46, 52, 64, 0.4) 0 4px 12px !important;
+}
+
+.card.night_mode .contrast-toggle.active {
+  box-shadow: rgba(46, 52, 64, 0.4) 0 4px 12px !important;
 }
 
 /* -------------------------------------------------- TABLES */
@@ -233,79 +832,252 @@ table {
   margin: 0 auto;
   max-width: 100%;
 }
+
 table thead {
   background-color: var(--text-bg-selected);
 }
+
 table tr:nth-of-type(even) {
   background-color: var(--text-bg-selected);
 }
+
 table tr:first-child th:first-child {
-  border-top-left-radius: 0.5em;
+  border-top-left-radius: var(--border-radius-medium);
 }
+
 table tr:first-child th:last-child {
-  border-top-right-radius: 0.5em;
+  border-top-right-radius: var(--border-radius-medium);
 }
+
 table tr:last-child td:first-child {
-  border-bottom-left-radius: 0.5em;
+  border-bottom-left-radius: var(--border-radius-medium);
 }
+
 table tr:last-child td:last-child {
-  border-bottom-right-radius: 0.5em;
+  border-bottom-right-radius: var(--border-radius-medium);
 }
+
 table th {
   border-bottom: solid 1px var(--card-border);
   border-left: solid 1px var(--card-border);
   border-top: solid 1px var(--card-border);
   padding: 0.5em;
 }
+
 table th:last-child {
   border-right: solid 1px var(--card-border);
 }
+
 table td {
   border-bottom: solid 1px var(--card-border);
   border-left: solid 1px var(--card-border);
   padding: 0.5em;
 }
+
 table td:last-of-type {
   border-right: solid 1px var(--card-border);
 }
 
 /* -------------------------------------------------- HYPERLINKS */
-a, a:visited {
+a,
+a:visited {
   text-decoration: none;
   color: var(--link-fg);
-  border-radius: 0.25em;
+  border-radius: var(--border-radius-small);
   padding: 0 0.1em;
-  transition: all 0.1s;
+  transition: var(--transition-fast);
 }
-a:hover, a:active {
+
+a:hover,
+a:active {
   color: var(--link-fg-active);
   background-color: var(--link-bg-active);
+  transform: translateY(-0.5px);
 }
 
-/* -------------------------------------------------- FORMATTING */
+/* -------------------------------------------------- ENHANCED TEXT FORMATTING WITH PROPER COLORS */
+/* Bold text styling */
 b,
 strong {
-  color: var(--bold-fg);
+  color: var(--bold-fg) !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
 }
 
+/* Italic text styling */
 i,
 em {
-  color: var(--italic-fg);
+  color: var(--italic-fg) !important;
+  font-style: italic !important;
+  text-decoration: none !important;
 }
 
-b > i,
-i > b {
-  color: var(--bold-italic-fg);
-}
-
+/* Underline text styling */
 u {
-  color: var(--underline-fg);
+  color: var(--underline-fg) !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--underline-fg) !important;
+  text-decoration-thickness: 1.5px !important;
+  text-underline-offset: 2px !important;
 }
 
-pre {
-  white-space: normal;
+/* Bold + Italic combinations */
+b > i,
+i > b,
+strong > em,
+em > strong,
+b i,
+i b,
+strong em,
+em strong {
+  color: var(--bold-italic-fg) !important;
+  font-weight: 600 !important;
+  font-style: italic !important;
+  text-decoration: none !important;
 }
 
+/* Bold + Underline combinations */
+b > u,
+u > b,
+strong > u,
+u > strong,
+b u,
+u b,
+strong u,
+u strong {
+  color: var(--bold-fg) !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--bold-fg) !important;
+  text-decoration-thickness: 1.5px !important;
+  text-underline-offset: 2px !important;
+}
+
+/* Italic + Underline combinations */
+i > u,
+u > i,
+em > u,
+u > em,
+i u,
+u i,
+em u,
+u em {
+  color: var(--italic-fg) !important;
+  font-style: italic !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--italic-fg) !important;
+  text-decoration-thickness: 1.5px !important;
+  text-underline-offset: 2px !important;
+}
+
+/* Bold + Italic + Underline combinations */
+b > i > u,
+b > u > i,
+i > b > u,
+i > u > b,
+u > b > i,
+u > i > b,
+strong > em > u,
+strong > u > em,
+em > strong > u,
+em > u > strong,
+u > strong > em,
+u > em > strong,
+b i u,
+b u i,
+i b u,
+i u b,
+u b i,
+u i b,
+strong em u,
+strong u em,
+em strong u,
+em u strong,
+u strong em,
+u em strong {
+  color: var(--bold-italic-fg) !important;
+  font-weight: 600 !important;
+  font-style: italic !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--bold-italic-fg) !important;
+  text-decoration-thickness: 1.5px !important;
+  text-underline-offset: 2px !important;
+}
+
+/* Ensure text formatting overrides inherit colors */
+.prettify-field b,
+.prettify-field strong,
+.prettify-field i,
+.prettify-field em,
+.prettify-field u {
+  color: inherit;
+}
+
+.prettify-field b,
+.prettify-field strong {
+  color: var(--bold-fg) !important;
+}
+
+.prettify-field i,
+.prettify-field em {
+  color: var(--italic-fg) !important;
+}
+
+.prettify-field u {
+  color: var(--underline-fg) !important;
+}
+
+/* -------------------------------------------------- FIX EMPTY CLOZE STUBS */
+/* Hide empty cloze elements with higher specificity */
+.cloze:empty,
+.prettify-field--front .cloze:empty,
+.prettify-field--back .cloze:empty,
+#qa .prettify-flashcard .prettify-field--front .cloze:empty,
+#qa .prettify-flashcard .prettify-field--back .cloze:empty {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* Hide cloze elements with only whitespace */
+.cloze:not(:nth-child(n)),
+.cloze[style*="display: none"] {
+  display: none !important;
+}
+
+/* Additional fix for zero-width cloze elements */
+.cloze {
+  min-width: 0 !important;
+}
+
+.cloze:before,
+.cloze:after {
+  content: none !important;
+}
+
+/* -------------------------------------------------- ACCESSIBILITY */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@media (prefers-contrast: high) {
+  .prettify-flashcard {
+    border: 2px solid var(--text-fg);
+  }
+  .cloze {
+    border-width: 2px;
+  }
+}
 /* -------------------------------------------------- CUSTOM FONTS */
 @font-face {
   font-family: Rubik;
@@ -315,20 +1087,54 @@ pre {
 }
 @font-face {
   font-family: Rubik;
-  src: local("Rubik-Bold"), url("_Rubik-Bold.woff2") format("wofff2");
+  src: local("Rubik-Bold"), url("_Rubik-Bold.woff2") format("woff2");
   font-style: normal;
   font-weight: bold;
 }
 @font-face {
   font-family: Rubik;
-  src: local("Rubik-Italic"), url("_Rubik-Italic.woff2") format("wofff2");
+  src: local("Rubik-Italic"), url("_Rubik-Italic.woff2") format("woff2");
   font-style: italic;
   font-weight: normal;
 }
 @font-face {
   font-family: Rubik;
-  src: local("Rubik-BoldItalic"), url("_Rubik-BoldItalic.woff2") format("wofff2");
+  src: local("Rubik-BoldItalic"), url("_Rubik-BoldItalic.woff2") format("woff2");
   font-style: italic;
   font-weight: bold;
 }
-/* -------------------------------------------------- END OF THEME */
+.prettify-tags {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 1em;
+  margin-top: 1.5em;
+}
+
+.prettify-field--front {
+  font-size: 1em;
+  font-weight: 500;
+  line-height: 1.7;
+}
+
+.zoom-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+}
+
+.zoom-fullscreen img {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* -------------------------------------------------- END OF ENHANCED THEME */

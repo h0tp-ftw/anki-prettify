@@ -1,59 +1,356 @@
-<!-- Prettify by @pranavdeshai: Basic (back)
+<!-- Prettify Mod by @h0tp, based on Prettify by @pranavdeshai (Basic Back)
 
-Version: 0.1.3
+- Nord
+- Catppuccin
+
+Version: 1.0, based on Prettify 0.1.1
+
+Changelog:
+- modified colors to fit dark mode, including no blue shades
+- card hover zoom, click for full image 
+- contrast toggle for poor contrast or transparent images
+- auto text contrast for text with poor contrast, e.g. black text in dark moe card will become white
+- excessive whitespace is auto removed
+- beautiful tags and deck breadcrumbs
+- beautiful animations
+
 Readme: https://github.com/pranavdeshai/anki-prettify
 Links:
 - Reddit: https://www.reddit.com/user/Various_Breadfruit48
 - GitHub: https://github.com/pranavdeshai
 - Buy Me a Coffee: https://www.buymeacoffee.com/pranavdeshai
-- Ko-fi: https://ko-fi.com/pranavdeshai
+- Ko-fi: https://ko-fi.com/pranavdeshai -->
 
--->
-<div class="prettify-flashcard">
+<div class="prettify-flashcard" id="qa">
   <div class="prettify-deck">{{Deck}}</div>
-  <div class="prettify-field prettify-field--front">{{edit:Front}}</div>
-  <hr class="prettify-divider prettify-divider--answer" id="answer" />
-  <div class="prettify-field prettify-field--back">{{edit:Back}}</div>
+<div class="prettify-field prettify-field--front">{{edit:Front}}</div>
+
+  <div class="prettify-divider prettify-divider--answer"></div>
+<div class="prettify-field prettify-field--back">{{Back}}</div>
+
   {{#Tags}}
   <div class="prettify-tags">{{clickable:Tags}}</div>
   {{/Tags}}
 </div>
 
-<script>
-  // Split hierarchical tags
-  var tagsContainerEl = document.querySelectorAll(".prettify-tags > *");
-  if (tagsContainerEl.length > 0) {
-    var tags = [];
-    tagsContainerEl.forEach((tagEl) => {
-      tagEl.classList.add("prettify-tag");
-      tags.push(tagEl.innerHTML);
-      tags.forEach((tag) => {
-        var childTag = tag.split("::").filter(Boolean);
-        tagEl.innerHTML = childTag[childTag.length - 1].trim();
-      });
-    });
-  } else {
-    tagsContainerEl = document.querySelector(".prettify-tags");
-    var tags = tagsContainerEl.innerHTML.split(" ").filter(Boolean);
-    var html = "";
-    tags.forEach((tag) => {
-      var childTag = tag.split("::").filter(Boolean);
-      html +=
-        "<span class='prettify-tag'>" +
-        childTag[childTag.length - 1] +
-        "</span>";
-    });
-    tagsContainerEl.innerHTML = html;
-  }
-</script>
+<div id="image-zoom-backdrop" class="image-zoom-backdrop"></div>
 
 <script>
-  // Breadcrumbs to current deck
-  var deckEl = document.querySelector(".prettify-deck");
-  var subDecks = deckEl.innerHTML.split("::").filter(Boolean);
-  html = [];
-  subDecks.forEach((subDeck) => {
-    html.push("<span class='prettify-subdeck'>" + subDeck + "</span>");
+;(function() {
+  'use strict';
+  const instanceId = `back_${Date.now()}`;
+
+  // Cleanup previous instances
+  document.querySelectorAll('[data-anki-instance]').forEach(el => {
+    if (el.dataset.ankiInstance !== instanceId) el.remove();
   });
-  deckEl.innerHTML = html.join("&nbsp;/&nbsp;");
+
+  function initializeBreadcrumbs() {
+    const deckEl = document.querySelector('.prettify-deck');
+    if (!deckEl || deckEl.dataset.processed) return;
+    
+    deckEl.dataset.processed = true;
+    const subDecks = (deckEl.textContent || '').split('::').filter(Boolean);
+    // No animation on back side - we're viewing the same card
+    
+    deckEl.innerHTML = subDecks.map((subDeck, index) => {
+      const colorClass = index % 2 ? 'prettify-subdeck--secondary' : 'prettify-subdeck--primary';
+      return `<span class="prettify-subdeck ${colorClass}">${subDeck.trim()}</span>${
+        index < subDecks.length - 1 ? '<span class="deck-separator">›</span>' : ''
+      }`;
+    }).join('');
+  }
+    function initializeTags() {
+    const tagsContainer = document.querySelector('.prettify-tags');
+    if (!tagsContainer || tagsContainer.dataset.processed) return;
+    
+    tagsContainer.dataset.processed = true;
+    // No animation on back side - we're viewing the same card
+    
+    tagsContainer.innerHTML = (tagsContainer.textContent || '').split(' ')
+      .filter(Boolean).map(tag => {
+        const parts = tag.replace(/<[^>]*>/g, '').split('::');
+        return `<span class="prettify-tag">${parts.pop()}${parts.length ? 
+          `<span class="tag-tooltip">${parts.join(' <span class="tag-arrow">→</span> ')}</span>` : ''}</span>`;
+      }).join('');
+  }
+
+    function addContrastToggle() {
+    const flashcard = document.querySelector('.prettify-flashcard');
+    const images = Array.from(document.querySelectorAll('#qa img'));
+    
+    if (flashcard && images.length > 0 && !document.querySelector('.contrast-toggle')) {
+      const contrastToggle = document.createElement('div');
+      contrastToggle.className = 'contrast-toggle';
+      contrastToggle.title = 'Toggle image contrast enhancement';
+      
+      contrastToggle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2a10 10 0 0 0 0 20V2z" fill="currentColor"/></svg>';
+      
+      flashcard.appendChild(contrastToggle);
+      
+      contrastToggle.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.toggle('active');
+        
+        const isActive = this.classList.contains('active');
+        
+        // Change icon with smooth transition
+        if (isActive) {
+          this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="currentColor" stroke="currentColor" stroke-width="2"/></svg>';
+          this.setAttribute('aria-pressed', 'true');
+        } else {
+          this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2a10 10 0 0 0 0 20V2z" fill="currentColor"/></svg>';
+          this.setAttribute('aria-pressed', 'false');
+        }
+        
+        images.forEach(img => {
+          if (isActive) {
+            img.style.backgroundColor = '#FFFFFF';
+            img.style.boxShadow = '0 0 30px 8px rgba(255,255,255,0.9), 0 0 60px 16px rgba(255,255,255,0.6)';
+            img.style.padding = '16px';
+            img.style.borderRadius = '0.5rem';
+            img.style.border = '2px solid rgba(255,255,255,0.8)';
+          } else {
+            img.style.backgroundColor = '';
+            img.style.boxShadow = '';
+            img.style.padding = '';
+            img.style.borderRadius = '';
+            img.style.border = '';
+          }
+        });
+      };
+    }
+  }
+  function cleanupWhitespace() {
+    const fields = document.querySelectorAll('.prettify-field');
+    fields.forEach(field => {
+      if (field.dataset.whitespaceProcessed) return;
+      field.dataset.whitespaceProcessed = true;
+      
+      const originalHTML = field.innerHTML;
+      const cleanedHTML = originalHTML
+        .replace(/(<br\s*\/?>|<br>)/gi, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/<p>\s*<\/p>/gi, '')
+        .replace(/<div>\s*<\/div>/gi, '')
+        .replace(/^\s+|\s+$/g, '')
+        .replace(/^(&nbsp;)+|(&nbsp;)+$/gi, '')
+        .replace(/(&nbsp;){2,}/gi, '&nbsp;')
+        .replace(/<(\w+)[^>]*>\s*<\/\1>/gi, '')
+        .replace(/\n\s*\n/g, '\n')
+        .replace(/\t/g, ' ')
+        .trim();
+      
+      if (cleanedHTML !== originalHTML && cleanedHTML.length > 0) {
+        field.innerHTML = cleanedHTML;
+      }
+    });
+  }
+  function enhanceTextContrast() {
+    document.querySelectorAll('.prettify-field').forEach(field => {
+      if (field.dataset.contrastProcessed) return;
+      field.dataset.contrastProcessed = true;
+      
+      field.querySelectorAll('[style*="color"]').forEach(el => {
+        const color = el.style.color;
+        const rgb = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        const hex = color.match(/#([0-9a-f]{3,6})/i);
+        
+        let isDark = false;
+        if (rgb) {
+          const [, r, g, b] = rgb;
+          const brightness = (parseInt(r) * 299 + parseInt(g) * 587 + parseInt(b) * 114) / 1000;
+          isDark = brightness < 128;
+        } else if (hex) {
+          const hexValue = hex[1];
+          const r = parseInt(hexValue.substr(0, 2), 16);
+          const g = parseInt(hexValue.substr(2, 2), 16);
+          const b = parseInt(hexValue.substr(4, 2), 16);
+          const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+          isDark = brightness < 128;
+        } else if (color === 'black' || color === '#000' || color === '#000000') {
+          isDark = true;
+        }
+        
+        if (isDark && document.body.classList.contains('night_mode')) {
+          el.style.color = '#eceff4';
+          el.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
+        }
+      });
+    });
+  }
+  function removeEmptyClozElements() {
+    const clozeElements = document.querySelectorAll('.cloze');
+    clozeElements.forEach(cloze => {
+      if (!cloze.textContent || cloze.textContent.trim() === '') {
+        cloze.remove();
+      }
+    });
+  }
+  function animateBackContent() {
+    const divider = document.querySelector('.prettify-divider--answer');
+    const backField = document.querySelector('.prettify-field--back');
+    
+    if (divider && !divider.dataset.animated) {
+      divider.dataset.animated = true;
+      divider.style.animation = 'divider-reveal 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+    }
+    
+    if (backField && !backField.dataset.animated) {
+      backField.dataset.animated = true;
+      backField.style.animation = 'field-slide-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards';
+    }
+  }
+
+  // Only initialize on cloze cards
+  function init() {
+    // Exit if this is not a cloze card
+    if (!document.querySelector('.prettify-field--front')) {
+      return;
+    }
+    try {
+      initializeBreadcrumbs();
+      initializeTags();
+      cleanupWhitespace();
+      enhanceTextContrast();
+      manageImages();
+      addContrastToggle();
+      animateBackContent();
+    } catch (error) {
+      console.error('Initialization error:', error);
+    }
+  }
+
+  // Core zoom setup
+  function manageImages() {
+    const backdrop = document.getElementById('image-zoom-backdrop');
+    const images   = Array.from(document.querySelectorAll('#qa img'));
+
+    // Backdrop close handlers (once)
+    if (!backdrop.dataset.handlersSetup) {
+      backdrop.dataset.handlersSetup = '1';
+      backdrop.addEventListener('click', () => {
+        resetAllImages(images);
+        backdrop.style.display = 'none';
+        backdrop.classList.remove('active');
+        document.body.style.overflow = '';
+      });  // [1]
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          resetAllImages(images);
+          backdrop.style.display = 'none';
+          backdrop.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });  // [1]
+    }
+
+    // Image click behavior
+    images.forEach(img => {
+      if (img.dataset.initialized) return;
+      img.dataset.initialized = '1';
+      img.dataset.zoomLevel   = '0';
+
+      // Prevent overflow
+      img.parentElement.style.overflow = 'hidden';
+      img.style.cursor = 'zoom-in';
+
+      img.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const level = (parseInt(this.dataset.zoomLevel, 10) + 1) % 4;
+        this.dataset.zoomLevel = String(level);
+        images.filter(i => i !== this).forEach(resetImage);
+        applyZoomState(this, level, backdrop, images);
+      });  // [1]
+    });
+  }
+
+  // Zoom logic: reset, intermediate, and fullscreen stages
+  function applyZoomState(img, level, backdrop, allImages) {
+    // Remove any existing fullscreen clone
+    document.querySelectorAll('[data-is-fullscreen-clone="true"]').forEach(c => c.remove());
+
+    if (1 === 1) {
+      // Reset to original
+      resetImage(img);
+      backdrop.style.display = 'none';
+      backdrop.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    else if (level === 3) {
+      // Fullscreen on third click only
+      const cardRect = document.getElementById('qa').getBoundingClientRect();  // [2]
+      const naturalW = img.naturalWidth;
+      const naturalH = img.naturalHeight;
+      const maxW     = Math.min(naturalW, cardRect.width);
+      const maxH     = Math.min(naturalH, cardRect.height);
+
+      const clone = img.cloneNode(true);  // [3]
+      clone.dataset.isFullscreenClone = 'true';
+      Object.assign(clone.style, {
+        position:  'fixed',
+        top:       `${cardRect.top + (cardRect.height - maxH) / 2}px`,
+        left:      `${cardRect.left + (cardRect.width - maxW) / 2}px`,
+        width:     `${maxW}px`,
+        height:    `${maxH}px`,
+        objectFit: 'contain',
+        zIndex:    '10001',
+        cursor:    'zoom-out'
+      });
+
+      backdrop.style.display = 'block';
+      backdrop.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      document.body.appendChild(clone);
+
+      clone.addEventListener('click', () => {
+        clone.remove();
+        backdrop.style.display = 'none';
+        backdrop.classList.remove('active');
+        document.body.style.overflow = '';
+        resetAllImages(allImages);
+      });  // [1]
+    }
+    else {
+      // Constrained zoom for levels 1 & 2
+      const settings = [
+        { scale: 1.2, maxW: '65%', maxH: '60vh', z: 10 },
+        { scale: 1.5, maxW: '80%', maxH: '75vh', z: 20 }
+      ][level - 1];
+
+      Object.assign(img.style, {
+        transition: 'transform 0.2s ease',
+        transform:  `scale(${settings.scale})`,
+        maxWidth:   settings.maxW,
+        maxHeight:  settings.maxH,
+        position:   'relative',
+        zIndex:     settings.z,
+        cursor:     'zoom-in'
+      });
+      backdrop.style.display = 'none';
+      backdrop.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  function resetImage(img) {
+    img.removeAttribute('style');
+    img.dataset.zoomLevel = '0';
+  }
+
+  function resetAllImages(images) {
+    images.forEach(resetImage);
+    document.querySelectorAll('[data-is-fullscreen-clone="true"]').forEach(c => c.remove());
+  }
+
+
+  const observer = new MutationObserver(init);  // [4]
+  observer.observe(document.getElementById('qa'), { childList: true, subtree: true });
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
 </script>
+
+
+

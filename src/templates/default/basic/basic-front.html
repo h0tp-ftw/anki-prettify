@@ -1,57 +1,389 @@
-<!-- Prettify by @pranavdeshai: Basic (front)
+<!-- Prettify Mod by @h0tp, based on Prettify by @pranavdeshai (Basic Front)
 
-Version: 0.1.3
+- Nord
+- Catppuccin
+
+Version: 1.0, based on Prettify 0.1.1
+
+Changelog:
+- modified colors to fit dark mode, including no blue shades
+- card hover zoom, click for full image 
+- contrast toggle for poor contrast or transparent images
+- auto text contrast for text with poor contrast, e.g. black text in dark moe card will become white
+- excessive whitespace is auto removed
+- beautiful tags and deck breadcrumbs
+- beautiful animations
+
 Readme: https://github.com/pranavdeshai/anki-prettify
 Links:
 - Reddit: https://www.reddit.com/user/Various_Breadfruit48
 - GitHub: https://github.com/pranavdeshai
 - Buy Me a Coffee: https://www.buymeacoffee.com/pranavdeshai
-- Ko-fi: https://ko-fi.com/pranavdeshai
+- Ko-fi: https://ko-fi.com/pranavdeshai -->
 
--->
-<div class="prettify-flashcard">
+<div class="prettify-flashcard" id="qa">
   <div class="prettify-deck">{{Deck}}</div>
   <div class="prettify-field prettify-field--front">{{edit:Front}}</div>
+
   {{#Tags}}
   <div class="prettify-tags">{{clickable:Tags}}</div>
   {{/Tags}}
 </div>
 
-<script>
-  // Split hierarchical tags
-  var tagsContainerEl = document.querySelectorAll(".prettify-tags > *");
-  if (tagsContainerEl.length > 0) {
-    var tags = [];
-    tagsContainerEl.forEach((tagEl) => {
-      tagEl.classList.add("prettify-tag");
-      tags.push(tagEl.innerHTML);
-      tags.forEach((tag) => {
-        var childTag = tag.split("::").filter(Boolean);
-        tagEl.innerHTML = childTag[childTag.length - 1].trim();
-      });
-    });
-  } else {
-    tagsContainerEl = document.querySelector(".prettify-tags");
-    var tags = tagsContainerEl.innerHTML.split(" ").filter(Boolean);
-    var html = "";
-    tags.forEach((tag) => {
-      var childTag = tag.split("::").filter(Boolean);
-      html +=
-        "<span class='prettify-tag'>" +
-        childTag[childTag.length - 1] +
-        "</span>";
-    });
-    tagsContainerEl.innerHTML = html;
-  }
-</script>
+<div id="image-zoom-backdrop" class="image-zoom-backdrop"></div>
 
 <script>
-  // Breadcrumbs to current deck
-  var deckEl = document.querySelector(".prettify-deck");
-  var subDecks = deckEl.innerHTML.split("::").filter(Boolean);
-  html = [];
-  subDecks.forEach((subDeck) => {
-    html.push("<span class='prettify-subdeck'>" + subDeck + "</span>");
+(function() {
+  'use strict';
+  const instanceId = `front_${Date.now()}`;
+  
+  // Cleanup previous state
+  document.querySelectorAll('[data-anki-instance]').forEach(el => {
+    if (el.dataset.ankiInstance !== instanceId) el.remove();
   });
-  deckEl.innerHTML = html.join("&nbsp;/&nbsp;");
+
+  // Check if this is a new card by comparing content
+  function isNewCard() {
+    const deckText = document.querySelector('.prettify-deck')?.textContent || '';
+    const fieldText = document.querySelector('.prettify-field--front')?.textContent || '';
+    const currentCardId = btoa(encodeURIComponent(deckText + fieldText)).substring(0, 20);
+    const lastCardId = sessionStorage.getItem('anki-last-card-id');
+    
+    if (currentCardId !== lastCardId) {
+      sessionStorage.setItem('anki-last-card-id', currentCardId);
+      return true;
+    }
+    return false;
+  }
+
+  function initializeBreadcrumbs() {
+    const deckEl = document.querySelector('.prettify-deck');
+    if (!deckEl || deckEl.dataset.processed) return;
+    
+    deckEl.dataset.processed = true;
+    const subDecks = (deckEl.textContent || '').split('::').filter(Boolean);
+    const shouldAnimate = isNewCard();
+    
+    deckEl.innerHTML = subDecks.map((subDeck, index) => {
+      const colorClass = index % 2 ? 'prettify-subdeck--secondary' : 'prettify-subdeck--primary';
+      const animationStyle = shouldAnimate ? `style="animation-delay: ${index * 100}ms"` : '';
+      return `<span class="prettify-subdeck ${colorClass}" ${animationStyle}>${subDeck.trim()}</span>${
+        index < subDecks.length - 1 ? '<span class="deck-separator">›</span>' : ''
+      }`;
+    }).join('');
+  }
+
+  function initializeTags() {
+    const tagsContainer = document.querySelector('.prettify-tags');
+    if (!tagsContainer || tagsContainer.dataset.processed) return;
+    
+    tagsContainer.dataset.processed = true;
+    const shouldAnimate = sessionStorage.getItem('anki-animate-new-card') === 'true';
+    
+    tagsContainer.innerHTML = (tagsContainer.textContent || '').split(' ')
+      .filter(Boolean).map((tag, index) => {
+        const parts = tag.replace(/<[^>]*>/g, '').split('::');
+        const animationStyle = shouldAnimate ? `style="animation-delay: ${index * 50}ms"` : '';
+        return `<span class="prettify-tag" ${animationStyle}>${parts.pop()}${parts.length ? 
+          `<span class="tag-tooltip">${parts.join(' <span class="tag-arrow">→</span> ')}</span>` : ''}</span>`;
+      }).join('');
+  }
+
+  function addContrastToggle() {
+    const flashcard = document.querySelector('.prettify-flashcard');
+    const images = Array.from(document.querySelectorAll('#qa img'));
+    
+    if (flashcard && images.length > 0 && !document.querySelector('.contrast-toggle')) {
+      const contrastToggle = document.createElement('div');
+      contrastToggle.className = 'contrast-toggle';
+      contrastToggle.title = 'Toggle image contrast enhancement';
+      
+      contrastToggle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2a10 10 0 0 0 0 20V2z" fill="currentColor"/></svg>';
+      
+      flashcard.appendChild(contrastToggle);
+      
+      contrastToggle.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.toggle('active');
+        
+        const isActive = this.classList.contains('active');
+        
+        // Change icon with smooth transition
+        if (isActive) {
+          this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="currentColor" stroke="currentColor" stroke-width="2"/></svg>';
+          this.setAttribute('aria-pressed', 'true');
+        } else {
+          this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2a10 10 0 0 0 0 20V2z" fill="currentColor"/></svg>';
+          this.setAttribute('aria-pressed', 'false');
+        }
+        
+        images.forEach(img => {
+          if (isActive) {
+            img.style.backgroundColor = '#FFFFFF';
+            img.style.boxShadow = '0 0 30px 8px rgba(255,255,255,0.9), 0 0 60px 16px rgba(255,255,255,0.6)';
+            img.style.padding = '16px';
+            img.style.borderRadius = '0.5rem';
+            img.style.border = '2px solid rgba(255,255,255,0.8)';
+          } else {
+            img.style.backgroundColor = '';
+            img.style.boxShadow = '';
+            img.style.padding = '';
+            img.style.borderRadius = '';
+            img.style.border = '';
+          }
+        });
+      };
+    }
+  }
+
+  function cleanupWhitespace() {
+    const fields = document.querySelectorAll('.prettify-field');
+    fields.forEach(field => {
+      if (field.dataset.whitespaceProcessed) return;
+      field.dataset.whitespaceProcessed = true;
+      
+      const originalHTML = field.innerHTML;
+      const cleanedHTML = originalHTML
+        .replace(/(<br\s*\/?>|<br>)/gi, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/<p>\s*<\/p>/gi, '')
+        .replace(/<div>\s*<\/div>/gi, '')
+        .replace(/^\s+|\s+$/g, '')
+        .replace(/^(&nbsp;)+|(&nbsp;)+$/gi, '')
+        .replace(/(&nbsp;){2,}/gi, '&nbsp;')
+        .replace(/<(\w+)[^>]*>\s*<\/\1>/gi, '')
+        .replace(/\n\s*\n/g, '\n')
+        .replace(/\t/g, ' ')
+        .trim();
+      
+      if (cleanedHTML !== originalHTML && cleanedHTML.length > 0) {
+        field.innerHTML = cleanedHTML;
+      }
+    });
+  }
+
+  function enhanceTextContrast() {
+    document.querySelectorAll('.prettify-field').forEach(field => {
+      if (field.dataset.contrastProcessed) return;
+      field.dataset.contrastProcessed = true;
+      
+      field.querySelectorAll('[style*="color"]').forEach(el => {
+        const color = el.style.color;
+        const rgb = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        const hex = color.match(/#([0-9a-f]{3,6})/i);
+        
+        let isDark = false;
+        if (rgb) {
+          const [, r, g, b] = rgb;
+          const brightness = (parseInt(r) * 299 + parseInt(g) * 587 + parseInt(b) * 114) / 1000;
+          isDark = brightness < 128;
+        } else if (hex) {
+          const hexValue = hex[1];
+          const r = parseInt(hexValue.substr(0, 2), 16);
+          const g = parseInt(hexValue.substr(2, 2), 16);
+          const b = parseInt(hexValue.substr(4, 2), 16);
+          const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+          isDark = brightness < 128;
+        } else if (color === 'black' || color === '#000' || color === '#000000') {
+          isDark = true;
+        }
+        
+        if (isDark && document.body.classList.contains('night_mode')) {
+          el.style.color = '#eceff4';
+          el.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
+        }
+      });
+    });
+  }
+
+  function manageImages() {
+    const backdrop = document.getElementById('image-zoom-backdrop');
+    const images = Array.from(document.querySelectorAll('#qa img'));
+    
+    // Setup backdrop event handlers
+    if (!backdrop.dataset.handlersSetup) {
+      backdrop.dataset.handlersSetup = true;
+      
+      backdrop.addEventListener('click', function(e) {
+        resetAllImages(images);
+        backdrop.classList.remove('active');
+        backdrop.style.display = 'none';
+        document.body.style.overflow = '';
+      });
+      
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          resetAllImages(images);
+          backdrop.classList.remove('active');
+          backdrop.style.display = 'none';
+          document.body.style.overflow = '';
+        }
+      });
+    }
+    
+    images.forEach(img => {
+      if (img.dataset.initialized) return;
+      img.dataset.initialized = true;
+      img.dataset.zoomLevel = '0';
+      
+      img.addEventListener('click', function(e) {
+        e.stopImmediatePropagation();
+        
+        // Prevent clicks on fullscreen images
+        if (this.dataset.zoomLevel === '3') {
+          resetAllImages(images);
+          backdrop.classList.remove('active');
+          backdrop.style.display = 'none';
+          document.body.style.overflow = '';
+          return;
+        }
+        
+        const level = (parseInt(this.dataset.zoomLevel) + 1) % 4;
+        this.dataset.zoomLevel = level.toString();
+        
+        images.filter(i => i !== this).forEach(resetImage);
+        applyZoomState(this, level, backdrop);
+      });
+    });
+  }
+
+  function applyZoomState(img, level, backdrop) {
+    if (level === 0) {
+      resetImage(img);
+      backdrop.classList.remove('active');
+      backdrop.style.display = 'none';
+      document.body.style.overflow = '';
+    } else if (level === 3) {
+      // FIXED: Properly working fullscreen zoom
+      const fullscreenImg = img.cloneNode(true);
+      fullscreenImg.src = img.src; // Ensure src is properly set
+      fullscreenImg.dataset.zoomLevel = '3';
+      fullscreenImg.dataset.isFullscreenClone = 'true';
+      
+      // Reset original image
+      resetImage(img);
+      
+      // Setup properly constrained fullscreen image
+      Object.assign(fullscreenImg.style, {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        width: '100vw',
+        height: '100vh',
+        maxWidth: 'none',
+        maxHeight: 'none',
+        objectFit: 'contain',
+        objectPosition: 'center',
+        zIndex: '10001',
+        cursor: 'zoom-out',
+        margin: '0',
+        padding: '0',
+        border: 'none',
+        borderRadius: '0',
+        background: 'transparent',
+        transition: 'none'
+      });
+      
+      // Show backdrop
+      backdrop.style.display = 'block';
+      backdrop.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      
+      // Add fullscreen image
+      document.body.appendChild(fullscreenImg);
+      
+      // Handle fullscreen image click
+      fullscreenImg.addEventListener('click', function() {
+        this.remove();
+        backdrop.classList.remove('active');
+        backdrop.style.display = 'none';
+        document.body.style.overflow = '';
+        resetAllImages(images);
+      });
+      
+    } else {
+      img.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+      const scale = [1.2, 1.5, 2][level - 1];
+      Object.assign(img.style, {
+        transform: `scale(${scale})`,
+        position: 'relative',
+        zIndex: 10 * level,
+        cursor: 'zoom-in'
+      });
+    }
+  }
+
+  function resetImage(img) {
+    img.removeAttribute('style');
+    img.dataset.zoomLevel = '0';
+  }
+
+  function resetAllImages(images) {
+    images.forEach(resetImage);
+    // Remove any fullscreen clones
+    document.querySelectorAll('[data-is-fullscreen-clone="true"]').forEach(clone => clone.remove());
+  }
+
+  function removeEmptyClozElements() {
+    const clozeElements = document.querySelectorAll('.cloze');
+    clozeElements.forEach(cloze => {
+      if (!cloze.textContent || cloze.textContent.trim() === '') {
+        cloze.remove();
+      }
+    });
+  }
+
+function setupFullscreenZoom() {
+  let container = document.querySelector('.zoom-fullscreen');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'zoom-fullscreen';
+    container.style.display = 'none';
+    document.body.appendChild(container);
+    container.addEventListener('click', () => {
+      container.style.display = 'none';
+      document.body.style.overflow = '';
+    });
+  }
+  document.querySelectorAll('#qa img').forEach(img => {
+    if (img.dataset.zoomInit) return;
+    img.dataset.zoomInit = '1';
+    img.addEventListener('click', e => {
+      e.stopPropagation();
+      container.innerHTML = `<img src="${img.src}" />`;
+      container.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    });
+  });
+}
+
+
+  function init() {
+    try {
+      // Set flag for potential tag animation
+      if (isNewCard()) {
+        sessionStorage.setItem('anki-animate-new-card', 'true');
+      } else {
+        sessionStorage.setItem('anki-animate-new-card', 'false');
+      }
+      
+      initializeBreadcrumbs();
+      initializeTags();
+      cleanupWhitespace();
+      enhanceTextContrast();
+setupFullscreenZoom();
+      manageImages();
+      addContrastToggle();
+    } catch (error) {
+      console.error('Initialization error:', error);
+    }
+  }
+
+  const observer = new MutationObserver(init);
+  observer.observe(document.getElementById('qa'), { childList: true, subtree: true });
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
 </script>
+>
