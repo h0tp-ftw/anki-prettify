@@ -1,4 +1,4 @@
-/* Prettify Mod by @h0tp, based on Prettify by @pranavdeshai (CSS)
+/* Prettify by @h0tp-ftw, fork of Prettify by @pranavdeshai (CSS)
 
 - Nord
 - Catppuccin
@@ -14,10 +14,10 @@ Changelog:
 - beautiful tags and deck breadcrumbs
 - beautiful animations
 
-Readme: https://github.com/pranavdeshai/anki-prettify
+Repo: https://github.com/h0tp-ftw/anki-prettify
 Links:
 - Reddit: https://www.reddit.com/user/Various_Breadfruit48
-- GitHub: https://github.com/pranavdeshai
+- GitHub: https://github.com/h0tp-ftw
 - Buy Me a Coffee: https://www.buymeacoffee.com/pranavdeshai
 - Ko-fi: https://ko-fi.com/pranavdeshai
 
@@ -28,8 +28,8 @@ Links:
   --card-text-align: left;
   --font-size-regular: 18px;
   --font-size-small: 16px;
-  --font-family: "Arial", -apple-system, system-ui, BlinkMacSystemFont, Segoe UI,
-    Roboto, Helvetica, Arial, sans-serif;
+  --font-family: "Rubik", "Arial", -apple-system, system-ui, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --img-width: 50%;
   --img-brightness: 1;
   --img-filter: none;
@@ -772,6 +772,15 @@ img + br {
   transition: var(--transition-fast) !important;
 }
 
+#qa img.prettify-image--contrast {
+  background-color: #ffffff !important;
+  border: 2px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: var(--border-radius-medium) !important;
+  box-shadow: 0 0 30px 8px rgba(255, 255, 255, 0.9),
+    0 0 60px 16px rgba(255, 255, 255, 0.6) !important;
+  padding: 16px !important;
+}
+
 /* Simple, clean contrast toggle button */
 .contrast-toggle {
   position: absolute !important;
@@ -791,6 +800,8 @@ img + br {
   z-index: 200 !important;
   color: var(--deck-primary) !important;
   box-shadow: var(--shadow-subtle) !important;
+  appearance: none;
+  padding: 0 !important;
   user-select: none;
 }
 
@@ -1081,25 +1092,29 @@ u em strong {
 /* -------------------------------------------------- CUSTOM FONTS */
 @font-face {
   font-family: Rubik;
-  src: local("Rubik-Regular"), url("_Rubik-Regular.woff2") format("woff2");
+  src: local("Rubik Regular"), local("Rubik-Regular"),
+    url("_Rubik-Regular.woff2") format("woff2");
   font-style: normal;
   font-weight: normal;
 }
 @font-face {
   font-family: Rubik;
-  src: local("Rubik-Bold"), url("_Rubik-Bold.woff2") format("woff2");
+  src: local("Rubik Bold"), local("Rubik-Bold"),
+    url("_Rubik-Bold.woff2") format("woff2");
   font-style: normal;
   font-weight: bold;
 }
 @font-face {
   font-family: Rubik;
-  src: local("Rubik-Italic"), url("_Rubik-Italic.woff2") format("woff2");
+  src: local("Rubik Italic"), local("Rubik-Italic"),
+    url("_Rubik-Italic.woff2") format("woff2");
   font-style: italic;
   font-weight: normal;
 }
 @font-face {
   font-family: Rubik;
-  src: local("Rubik-BoldItalic"), url("_Rubik-BoldItalic.woff2") format("woff2");
+  src: local("Rubik Bold Italic"), local("Rubik-BoldItalic"),
+    url("_Rubik-BoldItalic.woff2") format("woff2");
   font-style: italic;
   font-weight: bold;
 }
@@ -1113,28 +1128,6 @@ u em strong {
   font-size: 1em;
   font-weight: 500;
   line-height: 1.7;
-}
-
-.zoom-fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.8);
-  z-index: 9999;
-}
-
-.zoom-fullscreen img {
-  max-width: 90vw;
-  max-height: 90vh;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  display: block;
 }
 
 /* -------------------------------------------------- END OF ENHANCED THEME */
