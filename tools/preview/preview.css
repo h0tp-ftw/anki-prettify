@@ -258,7 +258,8 @@ a:focus-visible {
 
 .stage {
   display: grid;
-  place-items: center;
+  align-items: start;
+  justify-items: center;
   min-width: 0;
   padding: 1.5rem;
   overflow: auto;

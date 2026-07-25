@@ -144,3 +144,16 @@ test('cloze mode exposes and live-renders cloze-specific fields', async ({ page 
   await expect(frame.locator('.cloze')).toHaveText('live cloze');
   expect(errors).toEqual([]);
 });
+
+test('card preview stays top-aligned beside tall controls', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openHarness(page, '?fixture=rich&note=basic&side=front');
+
+  const stageBox = await page.locator('.stage').boundingBox();
+  const previewBox = await page.locator('#viewport-frame').boundingBox();
+
+  expect(stageBox).not.toBeNull();
+  expect(previewBox).not.toBeNull();
+  expect(previewBox.y - stageBox.y).toBeGreaterThanOrEqual(20);
+  expect(previewBox.y - stageBox.y).toBeLessThanOrEqual(30);
+});
