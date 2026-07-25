@@ -10,17 +10,20 @@ import { chromium } from '@playwright/test';
 const root = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const port = 4177;
 const baseUrl = `http://127.0.0.1:${port}/tools/preview/`;
+const cursorV2CrispEnabled = process.argv.includes('--cursor-v2-crisp');
 const cursorV2HdEnabled = process.argv.includes('--cursor-v2-hd');
-const cursorV2Enabled = process.argv.includes('--cursor-v2') || cursorV2HdEnabled;
+const cursorV2Enabled = process.argv.includes('--cursor-v2') || cursorV2HdEnabled || cursorV2CrispEnabled;
 const cursorEnabled = process.argv.includes('--cursor') || cursorV2Enabled;
 const output = join(
   root,
   'res',
   'gifs',
-  cursorV2HdEnabled
-    ? 'preview-editor-cursor-v2-hd.gif'
-    : cursorV2Enabled
-      ? 'preview-editor-cursor-v2.gif'
+  cursorV2CrispEnabled
+    ? 'preview-editor-cursor-v2-crisp.gif'
+    : cursorV2HdEnabled
+      ? 'preview-editor-cursor-v2-hd.gif'
+      : cursorV2Enabled
+        ? 'preview-editor-cursor-v2.gif'
       : cursorEnabled
         ? 'preview-editor-cursor.gif'
         : 'preview-editor.gif',
@@ -159,6 +162,49 @@ async function installCursorOverlay(page) {
         .viewport-frame--mobile {
           height: min(100%, 48rem);
         }
+
+        ${cursorV2CrispEnabled ? `
+          .app-header {
+            align-items: center;
+            padding: 0.6rem 0.85rem;
+          }
+
+          .app-header h1 {
+            margin: 0;
+            font-size: 1.4rem;
+          }
+
+          .app-header p:not(.eyebrow),
+          .header-actions {
+            display: none;
+          }
+
+          .eyebrow {
+            margin-bottom: 0.15rem !important;
+            font-size: 0.66rem;
+          }
+
+          .workspace {
+            grid-template-columns: 18rem minmax(0, 1fr);
+          }
+
+          .controls {
+            padding: 0.65rem;
+          }
+
+          .controls section {
+            padding: 0.65rem;
+          }
+
+          .stage {
+            padding: 0.5rem;
+          }
+
+          .viewport-frame {
+            width: 100%;
+            border-radius: 0.75rem;
+          }
+        ` : ''}
       ` : ''}
     `,
   });
@@ -279,13 +325,16 @@ let browser;
 try {
   await waitForServer();
   browser = await chromium.launch();
+  const captureSize = cursorV2CrispEnabled
+    ? { width: 1024, height: 576 }
+    : { width: 1280, height: 720 };
   const context = await browser.newContext({
     colorScheme: 'dark',
     recordVideo: {
       dir: videoDirectory,
-      size: { width: 1280, height: 720 },
+      size: captureSize,
     },
-    viewport: { width: 1280, height: 720 },
+    viewport: captureSize,
   });
   const page = await context.newPage();
 
@@ -348,9 +397,11 @@ try {
   await context.close();
   const videoPath = await video.path();
 
-  const gifFilter = cursorV2HdEnabled
-    ? 'fps=12,scale=1280:-1:flags=lanczos,unsharp=3:3:0.35:3:3:0,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=2:diff_mode=rectangle'
-    : 'fps=10,scale=960:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle';
+  const gifFilter = cursorV2CrispEnabled
+    ? 'fps=12,unsharp=3:3:0.25:3:3:0,split[s0][s1];[s0]palettegen=max_colors=256:reserve_transparent=0:stats_mode=diff[p];[s1][p]paletteuse=dither=none:diff_mode=rectangle'
+    : cursorV2HdEnabled
+      ? 'fps=12,scale=1280:-1:flags=lanczos,unsharp=3:3:0.35:3:3:0,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=2:diff_mode=rectangle'
+      : 'fps=10,scale=960:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle';
 
   const conversion = spawnSync(
     ffmpeg,

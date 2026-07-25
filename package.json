@@ -20,7 +20,8 @@
     "preview:capture": "node tools/preview/capture-readme.mjs",
     "preview:capture:cursor": "node tools/preview/capture-readme.mjs --cursor",
     "preview:capture:cursor:v2": "node tools/preview/capture-readme.mjs --cursor-v2",
-    "preview:capture:cursor:v2:hd": "node tools/preview/capture-readme.mjs --cursor-v2-hd"
+    "preview:capture:cursor:v2:hd": "node tools/preview/capture-readme.mjs --cursor-v2-hd",
+    "preview:capture:cursor:v2:crisp": "node tools/preview/capture-readme.mjs --cursor-v2-crisp"
   },
   "devDependencies": {
     "@fontsource/rubik": "5.3.0",
