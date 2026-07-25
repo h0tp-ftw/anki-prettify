@@ -1,0 +1,69 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Prettify: Preview cards",
+      "type": "npm",
+      "script": "preview",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "prettify-preview",
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Prettify: Fast checks",
+      "type": "npm",
+      "script": "check",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Prettify: Browser smoke matrix",
+      "type": "npm",
+      "script": "test:browser",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Prettify: Playwright tests",
+      "type": "npm",
+      "script": "test:e2e",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Prettify: Build release artifacts",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "tools\\build.py",
+        "--clean",
+        "--version",
+        "${input:releaseVersion}"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Prettify: Export manual templates",
+      "type": "npm",
+      "script": "templates:export",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "releaseVersion",
+      "type": "promptString",
+      "description": "Release version to embed in generated artifacts",
+      "default": "1.0.1"
+    }
+  ]
+}

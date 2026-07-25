@@ -1,0 +1,28 @@
+{
+  "name": "anki-prettify",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Preview, test, and package the Anki Prettify card templates.",
+  "scripts": {
+    "preview": "node tools/preview/server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node tools/preview/browser-smoke.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots",
+    "templates:check": "node tools/sync-templates.mjs --check",
+    "templates:export": "node tools/sync-templates.mjs",
+    "css:build": "sass --no-source-map src/styles/scss:src/styles/css",
+    "css:check": "node tools/check-css.mjs",
+    "check": "npm run templates:check && npm run test && npm run css:check",
+    "package": "node tools/run-build.mjs",
+    "preview:export": "node tools/preview/export-static.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.0",
+    "sass": "1.97.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

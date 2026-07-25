@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Anki Prettify Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap">
+    <link rel="stylesheet" href="./preview.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Developer harness</p>
+        <h1>Anki Prettify Preview</h1>
+        <p>Render the checked-in Anki templates and CSS, exercise interactions, and keep the same webview alive between cards.</p>
+      </div>
+      <div class="header-actions">
+        <button id="reload-source" type="button">Reload source</button>
+        <button id="next-card" type="button">Next card in same webview</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="controls" aria-label="Preview controls">
+        <section>
+          <h2>Card</h2>
+          <label>
+            Note type
+            <select id="note-type"></select>
+          </label>
+          <label>
+            Side
+            <select id="side">
+              <option value="front">Front</option>
+              <option value="back">Back</option>
+            </select>
+          </label>
+          <label id="card-number-row" hidden>
+            Reverse template
+            <select id="card-number">
+              <option value="1">Card 1</option>
+              <option value="2">Card 2</option>
+            </select>
+          </label>
+          <label>
+            Fixture
+            <select id="fixture"></select>
+          </label>
+        </section>
+
+        <section>
+          <h2>Environment</h2>
+          <label>
+            Appearance
+            <select id="appearance">
+              <option value="light">Light</option>
+              <option value="dark">Night mode</option>
+            </select>
+          </label>
+          <label>
+            Viewport
+            <select id="viewport">
+              <option value="desktop">Desktop</option>
+              <option value="mobile">Mobile</option>
+            </select>
+          </label>
+        </section>
+
+        <section>
+          <h2>Actions</h2>
+          <div class="button-stack">
+            <button id="smoke-test" type="button">Run interaction smoke test</button>
+            <button id="copy-template" type="button">Copy self-contained template</button>
+            <button id="copy-source" type="button">Copy declarative source</button>
+            <a id="view-template" target="_blank" rel="noreferrer">View template source</a>
+            <a id="view-runtime" target="_blank" rel="noreferrer">View shared runtime</a>
+            <a id="view-css" target="_blank" rel="noreferrer">View compiled CSS</a>
+          </div>
+        </section>
+
+        <section>
+          <h2>Diagnostics</h2>
+          <dl class="diagnostics">
+            <div><dt>Template</dt><dd id="template-name">—</dd></div>
+            <div><dt>Render</dt><dd id="render-count">0</dd></div>
+            <div><dt>Tokens</dt><dd id="token-status">—</dd></div>
+            <div><dt>Font</dt><dd id="font-status">Waiting</dd></div>
+            <div><dt>Runtime</dt><dd id="runtime-status">Waiting</dd></div>
+          </dl>
+          <ol id="runtime-log" class="runtime-log" aria-live="polite"></ol>
+        </section>
+      </aside>
+
+      <section class="stage" aria-label="Rendered card">
+        <div id="viewport-frame" class="viewport-frame viewport-frame--desktop">
+          <iframe
+            id="card-frame"
+            title="Rendered Anki card"
+            sandbox="allow-scripts allow-same-origin"
+          ></iframe>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>

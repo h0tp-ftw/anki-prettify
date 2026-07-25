@@ -1,0 +1,248 @@
+:root {
+  color-scheme: light dark;
+  font-family: "Rubik", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #10131a;
+  color: #edf1f7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(143, 188, 187, 0.14), transparent 35rem),
+    #10131a;
+}
+
+button,
+select,
+a {
+  font: inherit;
+}
+
+button,
+select {
+  border: 1px solid #394252;
+  border-radius: 0.65rem;
+  background: #1b202a;
+  color: #edf1f7;
+}
+
+button,
+a {
+  min-height: 2.55rem;
+}
+
+button {
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+}
+
+button:hover,
+a:hover {
+  border-color: #8fbcbb;
+}
+
+button:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(143, 188, 187, 0.4);
+  outline-offset: 2px;
+}
+
+.app-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #2a313d;
+  background: rgba(16, 19, 26, 0.88);
+  backdrop-filter: blur(18px);
+}
+
+.app-header h1,
+.app-header p {
+  margin: 0;
+}
+
+.app-header h1 {
+  margin-bottom: 0.35rem;
+  font-size: clamp(1.55rem, 3vw, 2.2rem);
+}
+
+.app-header p:not(.eyebrow) {
+  max-width: 52rem;
+  color: #aeb8c7;
+}
+
+.eyebrow {
+  margin-bottom: 0.35rem !important;
+  color: #8fbcbb;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(17rem, 21rem) minmax(0, 1fr);
+  min-height: calc(100vh - 8rem);
+}
+
+.controls {
+  padding: 1rem;
+  border-right: 1px solid #2a313d;
+  background: rgba(20, 24, 32, 0.88);
+  overflow: auto;
+}
+
+.controls section {
+  padding: 0.85rem;
+  border: 1px solid #2c3441;
+  border-radius: 0.9rem;
+  background: #171c25;
+}
+
+.controls section + section {
+  margin-top: 0.85rem;
+}
+
+.controls h2 {
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+}
+
+.controls label {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+  color: #c5ccd7;
+  font-size: 0.83rem;
+}
+
+.controls select {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.button-stack {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.button-stack a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #394252;
+  border-radius: 0.65rem;
+  color: #dce4ee;
+  text-decoration: none;
+}
+
+.diagnostics {
+  margin: 0;
+}
+
+.diagnostics div {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: 0.6rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #29313d;
+}
+
+.diagnostics dt {
+  color: #8f99a8;
+}
+
+.diagnostics dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.runtime-log {
+  max-height: 11rem;
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  overflow: auto;
+  color: #f0b8b8;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.stage {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 1.5rem;
+  overflow: auto;
+}
+
+.viewport-frame {
+  width: min(100%, 82rem);
+  height: min(78vh, 58rem);
+  border: 1px solid #3a4351;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #ececec;
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.34);
+  transition: width 180ms ease, height 180ms ease;
+}
+
+.viewport-frame--mobile {
+  width: min(100%, 25rem);
+  height: min(78vh, 48rem);
+}
+
+#card-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #ececec;
+}
+
+.status-ok {
+  color: #a6d8b3;
+}
+
+.status-warn {
+  color: #f2c98d;
+}
+
+.status-error {
+  color: #f0a3a3;
+}
+
+@media (max-width: 860px) {
+  .app-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .controls {
+    border-right: 0;
+    border-bottom: 1px solid #2a313d;
+  }
+
+  .stage {
+    padding: 1rem;
+  }
+}
