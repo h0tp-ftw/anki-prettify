@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Browser-based card preview harness with Anki field rendering, rich fixtures, persistent-webview simulation, diagnostics, source-copy actions, and interaction checks
+- Fast template/renderer tests, Sass synchronization checks, an installed-browser smoke test, and a Playwright browser suite
+- CI, GitHub Pages preview deployment, and tag-based release packaging workflows
+- A self-contained manual-template ZIP containing all six card templates and compiled theme CSS
+
+### Changed
+
+- All six declarative card templates now share one generated runtime from `src/runtime/card.js`, eliminating copied JavaScript drift
+- Package generation now writes only to `dist/`, verifies note/card counts inside each `.apkg`, and no longer rewrites source templates, SCSS, CSS, IDs, or tracked deck files
+- Python build dependencies are reduced to the package generator and its transitive requirements
+
+### Fixed
+
+- Restored multi-stage image zoom on back templates
+- Removed duplicate fullscreen click handlers on front templates
+- Preserved note-authored inline image styles when zoom or contrast state resets
+- Fixed new-card breadcrumb animation state and removed stray template output after front-side scripts
+- Added explicit cleanup for observers, keyboard listeners, fullscreen clones, and other state when Anki reuses its review webview
+- Replaced destructive field-wide whitespace regex rewriting with conservative empty-edge trimming
+- Corrected the Nord font stack so Rubik is selected, and added hosted-preview font loading with fallback diagnostics
+
 ## [0.1.3] - 2023-01-15
 
 ### Fixed
@@ -48,8 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix card not center-aligning on AnkiDroid
 - Fix tables not colouring properly
 
-[unreleased]: https://github.com/pranavdeshai/anki-prettify/compare/0.1.3...main
-[0.1.3]: https://github.com/pranavdeshai/anki-prettify/compare/0.1.2...0.1.3
-[0.1.2]: https://github.com/pranavdeshai/anki-prettify/compare/0.1.1...0.1.2
-[0.1.1]: https://github.com/pranavdeshai/anki-prettify/compare/0.1.0...0.1.1
-[0.1.0]: https://github.com/pranavdeshai/anki-prettify/releases/tag/0.1.0
+[unreleased]: https://github.com/h0tp-ftw/anki-prettify/compare/0.1.3...main
+[0.1.3]: https://github.com/h0tp-ftw/anki-prettify/compare/0.1.2...0.1.3
+[0.1.2]: https://github.com/h0tp-ftw/anki-prettify/compare/0.1.1...0.1.2
+[0.1.1]: https://github.com/h0tp-ftw/anki-prettify/compare/0.1.0...0.1.1
+[0.1.0]: https://github.com/h0tp-ftw/anki-prettify/releases/tag/0.1.0
