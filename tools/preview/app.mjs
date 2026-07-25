@@ -18,17 +18,32 @@ const elements = {
   cardNumberRow: document.querySelector('#card-number-row'),
   copySource: document.querySelector('#copy-source'),
   copyTemplate: document.querySelector('#copy-template'),
+  cssEditor: document.querySelector('#css-editor'),
+  fieldBack: document.querySelector('#field-back'),
+  fieldBackExtra: document.querySelector('#field-back-extra'),
+  fieldBackExtraRow: document.querySelector('#field-back-extra-row'),
+  fieldBackRow: document.querySelector('#field-back-row'),
+  fieldDeck: document.querySelector('#field-deck'),
+  fieldFront: document.querySelector('#field-front'),
+  fieldFrontRow: document.querySelector('#field-front-row'),
+  fieldTags: document.querySelector('#field-tags'),
+  fieldText: document.querySelector('#field-text'),
+  fieldTextRow: document.querySelector('#field-text-row'),
   fixture: document.querySelector('#fixture'),
   fontStatus: document.querySelector('#font-status'),
   nextCard: document.querySelector('#next-card'),
   noteType: document.querySelector('#note-type'),
   reloadSource: document.querySelector('#reload-source'),
   renderCount: document.querySelector('#render-count'),
+  resetCss: document.querySelector('#reset-css'),
+  resetFields: document.querySelector('#reset-fields'),
+  resetTemplate: document.querySelector('#reset-template'),
   runtimeLog: document.querySelector('#runtime-log'),
   runtimeStatus: document.querySelector('#runtime-status'),
   side: document.querySelector('#side'),
   smokeTest: document.querySelector('#smoke-test'),
   templateName: document.querySelector('#template-name'),
+  templateEditor: document.querySelector('#template-editor'),
   tokenStatus: document.querySelector('#token-status'),
   viewCss: document.querySelector('#view-css'),
   viewRuntime: document.querySelector('#view-runtime'),
@@ -52,10 +67,23 @@ const state = {
 const PREVIEW_FONT_STYLESHEET = 'https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap';
 
 let rawTemplate = '';
+let defaultTemplate = '';
 let rawRuntime = '';
 let renderedTemplate = '';
 let compiledCss = '';
+let defaultCss = '';
 let runtimeErrors = [];
+let renderTimer;
+
+function fixtureFields(name = state.fixture) {
+  const source = (FIXTURES[name] || FIXTURES.rich).fields;
+  return {
+    ...source,
+    Tags: Array.isArray(source.Tags) ? source.Tags.join('\n') : String(source.Tags ?? ''),
+  };
+}
+
+let editableFields = fixtureFields();
 
 for (const [value, config] of Object.entries(NOTE_TYPES)) {
   elements.noteType.add(new Option(config.label, value));
@@ -83,7 +111,26 @@ function syncControls() {
   elements.appearance.value = state.appearance;
   elements.viewport.value = state.viewport;
   elements.cardNumberRow.hidden = state.noteType !== 'basic_reverse';
+  const isCloze = state.noteType === 'cloze';
+  elements.fieldFrontRow.hidden = isCloze;
+  elements.fieldBackRow.hidden = isCloze;
+  elements.fieldTextRow.hidden = !isCloze;
+  elements.fieldBackExtraRow.hidden = !isCloze;
   elements.viewportFrame.className = `viewport-frame viewport-frame--${state.viewport}`;
+}
+
+function syncFieldEditors() {
+  elements.fieldDeck.value = editableFields.Deck ?? '';
+  elements.fieldFront.value = editableFields.Front ?? '';
+  elements.fieldBack.value = editableFields.Back ?? '';
+  elements.fieldText.value = editableFields.Text ?? '';
+  elements.fieldBackExtra.value = editableFields['Back Extra'] ?? '';
+  elements.fieldTags.value = editableFields.Tags ?? '';
+}
+
+function syncSourceEditors() {
+  elements.templateEditor.value = rawTemplate;
+  elements.cssEditor.value = compiledCss;
 }
 
 function updateQuery() {
@@ -112,11 +159,15 @@ function addRuntimeMessage(message, type = 'error') {
 }
 
 function currentFields() {
-  const source = FIXTURES[state.fixture].fields;
+  const tags = String(editableFields.Tags ?? '')
+    .split(/[\n,]+/)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
   return {
-    ...source,
-    Tags: Array.isArray(source.Tags) ? [...source.Tags] : source.Tags,
-    Deck: `${source.Deck}::Preview ${state.sequence}`,
+    ...editableFields,
+    Tags: tags,
+    Deck: `${editableFields.Deck || 'Inbox'}::Preview ${state.sequence}`,
   };
 }
 
@@ -126,19 +177,32 @@ async function fetchText(url) {
   return response.text();
 }
 
-async function loadSources() {
+async function loadSources({ resetTemplate = true, resetCss = true } = {}) {
   const template = templateUrl(state.noteType, state.side);
   const runtime = runtimeUrl();
   const stylesheet = stylesheetUrl('nord');
-  [rawTemplate, rawRuntime, compiledCss] = await Promise.all([
-    fetchText(template),
+
+  const [templateSource, runtimeSource, cssSource] = await Promise.all([
+    resetTemplate ? fetchText(template) : Promise.resolve(rawTemplate),
     fetchText(runtime),
-    fetchText(stylesheet),
+    resetCss ? fetchText(stylesheet) : Promise.resolve(compiledCss),
   ]);
+
+  if (resetTemplate) {
+    rawTemplate = templateSource;
+    defaultTemplate = templateSource;
+  }
+  rawRuntime = runtimeSource;
+  if (resetCss) {
+    compiledCss = cssSource;
+    defaultCss = cssSource;
+  }
+
   elements.viewTemplate.href = template.href;
   elements.viewRuntime.href = runtime.href;
   elements.viewCss.href = stylesheet.href;
   elements.templateName.textContent = template.pathname.split('/').slice(-3).join('/');
+  syncSourceEditors();
 }
 
 function bridgeScript() {
@@ -215,11 +279,23 @@ function executeTemplateInFrame(html) {
   }
 }
 
-async function render({ reload = false } = {}) {
+function scheduleRender() {
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(() => render(), 120);
+}
+
+async function render({ reloadTemplate = false, reloadCss = false } = {}) {
+  clearTimeout(renderTimer);
+  renderTimer = undefined;
+
   try {
     syncControls();
     updateQuery();
-    if (reload || !rawTemplate || !compiledCss) await loadSources();
+    const resetTemplate = reloadTemplate || !rawTemplate;
+    const resetCss = reloadCss || !compiledCss;
+    if (resetTemplate || resetCss || !rawRuntime) {
+      await loadSources({ resetTemplate, resetCss });
+    }
 
     const prepared = prepareTemplate(rawTemplate, state);
     const selfContained = injectRuntime(prepared, rawRuntime);
@@ -327,16 +403,61 @@ for (const [element, key, transform = (value) => value] of [
 ]) {
   element.addEventListener('change', async () => {
     state[key] = transform(element.value);
+    if (key === 'fixture') {
+      editableFields = fixtureFields();
+      syncFieldEditors();
+    }
     if (key === 'noteType' || key === 'side') {
-      rawTemplate = '';
-      await render({ reload: true });
+      await render({ reloadTemplate: true });
     } else {
       await render();
     }
   });
 }
 
-elements.reloadSource.addEventListener('click', () => render({ reload: true }));
+for (const [element, key] of [
+  [elements.fieldDeck, 'Deck'],
+  [elements.fieldFront, 'Front'],
+  [elements.fieldBack, 'Back'],
+  [elements.fieldText, 'Text'],
+  [elements.fieldBackExtra, 'Back Extra'],
+  [elements.fieldTags, 'Tags'],
+]) {
+  element.addEventListener('input', () => {
+    editableFields[key] = element.value;
+    scheduleRender();
+  });
+}
+
+elements.templateEditor.addEventListener('input', () => {
+  rawTemplate = elements.templateEditor.value;
+  scheduleRender();
+});
+
+elements.cssEditor.addEventListener('input', () => {
+  compiledCss = elements.cssEditor.value;
+  scheduleRender();
+});
+
+elements.resetFields.addEventListener('click', () => {
+  editableFields = fixtureFields();
+  syncFieldEditors();
+  render();
+});
+
+elements.resetTemplate.addEventListener('click', () => {
+  rawTemplate = defaultTemplate;
+  elements.templateEditor.value = rawTemplate;
+  render();
+});
+
+elements.resetCss.addEventListener('click', () => {
+  compiledCss = defaultCss;
+  elements.cssEditor.value = compiledCss;
+  render();
+});
+
+elements.reloadSource.addEventListener('click', () => render({ reloadTemplate: true, reloadCss: true }));
 elements.nextCard.addEventListener('click', () => {
   state.sequence += 1;
   render();
@@ -361,12 +482,14 @@ if (query.get('smoke') !== '1' && ['127.0.0.1', 'localhost'].includes(location.h
       location.reload();
       return;
     }
-    await render({ reload: true });
+    await render({ reloadTemplate: true, reloadCss: true });
   });
 }
 
 normalizeState();
+editableFields = fixtureFields();
 syncControls();
+syncFieldEditors();
 await initializeFrame();
-await render({ reload: true });
+await render({ reloadTemplate: true, reloadCss: true });
 if (query.get('smoke') === '1') await runSmokeTest();

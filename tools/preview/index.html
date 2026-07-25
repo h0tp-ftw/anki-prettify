@@ -51,6 +51,38 @@
         </section>
 
         <section>
+          <div class="section-heading">
+            <h2>Live content</h2>
+            <button id="reset-fields" class="button-compact" type="button">Reset fields</button>
+          </div>
+          <p class="section-help">Edit the current fixture and see the card update immediately. HTML and cloze syntax are supported.</p>
+          <label>
+            Deck
+            <input id="field-deck" type="text" autocomplete="off">
+          </label>
+          <label id="field-front-row">
+            Front
+            <textarea id="field-front" rows="5" spellcheck="false"></textarea>
+          </label>
+          <label id="field-back-row">
+            Back
+            <textarea id="field-back" rows="5" spellcheck="false"></textarea>
+          </label>
+          <label id="field-text-row" hidden>
+            Text
+            <textarea id="field-text" rows="5" spellcheck="false"></textarea>
+          </label>
+          <label id="field-back-extra-row" hidden>
+            Back Extra
+            <textarea id="field-back-extra" rows="4" spellcheck="false"></textarea>
+          </label>
+          <label>
+            Tags
+            <textarea id="field-tags" rows="3" spellcheck="false" placeholder="One tag per line"></textarea>
+          </label>
+        </section>
+
+        <section>
           <h2>Environment</h2>
           <label>
             Appearance
@@ -65,6 +97,26 @@
               <option value="desktop">Desktop</option>
               <option value="mobile">Mobile</option>
             </select>
+          </label>
+        </section>
+
+        <section>
+          <div class="section-heading">
+            <h2>Source editor</h2>
+            <span class="advanced-badge">Advanced</span>
+          </div>
+          <p class="section-help">Edit the selected front/back template or theme CSS. These changes remain in this tab only.</p>
+          <label>
+            Template
+            <textarea id="template-editor" class="code-editor" rows="12" spellcheck="false"></textarea>
+          </label>
+          <div class="editor-actions">
+            <button id="reset-template" type="button">Reset template</button>
+            <button id="reset-css" type="button">Reset CSS</button>
+          </div>
+          <label>
+            Theme CSS
+            <textarea id="css-editor" class="code-editor" rows="12" spellcheck="false"></textarea>
           </label>
         </section>
 

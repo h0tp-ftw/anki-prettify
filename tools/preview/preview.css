@@ -9,6 +9,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -18,13 +22,17 @@ body {
 }
 
 button,
+input,
 select,
+textarea,
 a {
   font: inherit;
 }
 
 button,
-select {
+input,
+select,
+textarea {
   border: 1px solid #394252;
   border-radius: 0.65rem;
   background: #1b202a;
@@ -47,7 +55,9 @@ a:hover {
 }
 
 button:focus-visible,
+input:focus-visible,
 select:focus-visible,
+textarea:focus-visible,
 a:focus-visible {
   outline: 3px solid rgba(143, 188, 187, 0.4);
   outline-offset: 2px;
@@ -96,7 +106,7 @@ a:focus-visible {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(17rem, 21rem) minmax(0, 1fr);
+  grid-template-columns: minmax(20rem, 26rem) minmax(0, 1fr);
   min-height: calc(100vh - 8rem);
 }
 
@@ -123,6 +133,35 @@ a:focus-visible {
   font-size: 0.95rem;
 }
 
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.section-heading h2 {
+  margin-bottom: 0;
+}
+
+.section-help {
+  margin: 0.65rem 0 0;
+  color: #939eae;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.advanced-badge {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid #485467;
+  border-radius: 999px;
+  color: #aeb8c7;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .controls label {
   display: grid;
   gap: 0.35rem;
@@ -131,10 +170,43 @@ a:focus-visible {
   font-size: 0.83rem;
 }
 
-.controls select {
+.controls input,
+.controls select,
+.controls textarea {
   width: 100%;
-  min-height: 2.5rem;
   padding: 0.55rem 0.7rem;
+}
+
+.controls input,
+.controls select {
+  min-height: 2.5rem;
+}
+
+.controls textarea {
+  min-height: 5rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.code-editor {
+  min-height: 15rem !important;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace !important;
+  font-size: 0.75rem !important;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.button-compact {
+  min-height: 2rem;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.editor-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
 }
 
 .button-stack {

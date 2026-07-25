@@ -95,3 +95,52 @@ test('mobile and dark-mode classes are applied inside the card webview', async (
   await expect(frameBody).toHaveClass(/mobile/);
   await expect(page.locator('#viewport-frame')).toHaveClass(/viewport-frame--mobile/);
 });
+
+test('live editors update fields, template, and CSS and can reset them', async ({ page }) => {
+  const errors = await openHarness(page, '?fixture=rich&note=basic&side=front');
+  const frame = page.frameLocator('#card-frame');
+
+  await page.locator('#field-front').fill('<p id="live-field">Edited <strong>live</strong></p>');
+  await expect(frame.locator('#live-field')).toHaveText('Edited live');
+
+  await page.locator('#field-tags').fill('custom\nnested::tag');
+  await expect(frame.locator('.prettify-tag')).toHaveCount(2);
+
+  const css = await page.locator('#css-editor').inputValue();
+  await page.locator('#css-editor').fill(`${css}\n#qa { outline: 7px solid rgb(1, 2, 3); }`);
+  await expect(frame.locator('#qa')).toHaveCSS('outline-width', '7px');
+
+  const template = await page.locator('#template-editor').inputValue();
+  await page.locator('#template-editor').fill(
+    template.replace('prettify-field--front', 'prettify-field--front live-template-marker'),
+  );
+  await expect(frame.locator('.live-template-marker')).toHaveCount(1);
+
+  await page.locator('#reset-template').click();
+  await expect(frame.locator('.live-template-marker')).toHaveCount(0);
+
+  await page.locator('#reset-css').click();
+  await expect(frame.locator('#qa')).toHaveCSS('outline-style', 'none');
+
+  await page.locator('#reset-fields').click();
+  await expect(page.locator('#field-front')).toHaveValue(/three core findings/);
+  await expect(frame.locator('#live-field')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('cloze mode exposes and live-renders cloze-specific fields', async ({ page }) => {
+  const errors = await openHarness(page, '?fixture=minimal&note=basic&side=front');
+  const frame = page.frameLocator('#card-frame');
+
+  await page.locator('#note-type').selectOption('cloze');
+  await expect(page.locator('#field-front-row')).toBeHidden();
+  await expect(page.locator('#field-text-row')).toBeVisible();
+  await expect(page.locator('#field-back-extra-row')).toBeVisible();
+
+  await page.locator('#field-text').fill('A {{c1::live cloze::hint}} example.');
+  await expect(frame.locator('.cloze')).toHaveText('[hint]');
+
+  await page.locator('#side').selectOption('back');
+  await expect(frame.locator('.cloze')).toHaveText('live cloze');
+  expect(errors).toEqual([]);
+});
