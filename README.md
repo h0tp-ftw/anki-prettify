@@ -129,7 +129,7 @@ Tested on
 
 **Hosted preview:** https://h0tp-ftw.github.io/anki-prettify/
 
-The repository includes a browser harness that renders the checked-in Anki templates and compiled CSS directly. It supports Basic, Basic + Reverse, and Cloze cards; front and back sides; light and night mode; desktop and mobile dimensions; rich fixtures; live field/template/CSS editing; same-webview card changes; source-copy actions; runtime diagnostics; and an interaction smoke test.
+The repository includes a browser harness that renders the checked-in Anki templates and compiled CSS directly. It supports Basic, Basic + Reverse, and Cloze cards; front and back sides; light and night mode; desktop and mobile dimensions; rich fixtures; live field/template/CSS editing; self-hosted Rubik fonts; same-webview card changes; source-copy actions; runtime diagnostics; and an interaction smoke test.
 
 ### First-time setup
 

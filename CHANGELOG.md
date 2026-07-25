@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Browser-based card preview harness with Anki field rendering, rich fixtures, live field/template/CSS editing and reset controls, persistent-webview simulation, diagnostics, source-copy actions, and interaction checks
+- Browser-based card preview harness with Anki field rendering, rich fixtures, live field/template/CSS editing and reset controls, self-hosted Rubik fonts, persistent-webview simulation, diagnostics, source-copy actions, and interaction checks
 - Fast template/renderer tests, Sass synchronization checks, an installed-browser smoke test, and a Playwright browser suite
 - CI, GitHub Pages preview deployment, and tag-based release packaging workflows
 - A self-contained manual-template ZIP containing all six card templates and compiled theme CSS
