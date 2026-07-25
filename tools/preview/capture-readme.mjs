@@ -10,17 +10,20 @@ import { chromium } from '@playwright/test';
 const root = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const port = 4177;
 const baseUrl = `http://127.0.0.1:${port}/tools/preview/`;
-const cursorV2Enabled = process.argv.includes('--cursor-v2');
+const cursorV2HdEnabled = process.argv.includes('--cursor-v2-hd');
+const cursorV2Enabled = process.argv.includes('--cursor-v2') || cursorV2HdEnabled;
 const cursorEnabled = process.argv.includes('--cursor') || cursorV2Enabled;
 const output = join(
   root,
   'res',
   'gifs',
-  cursorV2Enabled
-    ? 'preview-editor-cursor-v2.gif'
-    : cursorEnabled
-      ? 'preview-editor-cursor.gif'
-      : 'preview-editor.gif',
+  cursorV2HdEnabled
+    ? 'preview-editor-cursor-v2-hd.gif'
+    : cursorV2Enabled
+      ? 'preview-editor-cursor-v2.gif'
+      : cursorEnabled
+        ? 'preview-editor-cursor.gif'
+        : 'preview-editor.gif',
 );
 const temporary = await mkdtemp(join(tmpdir(), 'anki-prettify-readme-'));
 const videoDirectory = join(temporary, 'video');
@@ -345,13 +348,17 @@ try {
   await context.close();
   const videoPath = await video.path();
 
+  const gifFilter = cursorV2HdEnabled
+    ? 'fps=12,scale=1280:-1:flags=lanczos,unsharp=3:3:0.35:3:3:0,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=2:diff_mode=rectangle'
+    : 'fps=10,scale=960:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle';
+
   const conversion = spawnSync(
     ffmpeg,
     [
       '-y',
       '-i', videoPath,
       '-filter_complex',
-      'fps=10,scale=960:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle',
+      gifFilter,
       '-loop', '0',
       output,
     ],
