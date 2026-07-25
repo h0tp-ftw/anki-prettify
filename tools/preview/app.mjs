@@ -267,17 +267,26 @@ function executeTemplateInFrame(html) {
   });
   frameDocument.body.replaceChildren();
 
+  // Anki renders card templates inside its own #qa container. Reproduce that
+  // wrapper here so selectors such as #qa .prettify-flashcard behave exactly
+  // as they do in the review webview.
+  const qa = frameDocument.createElement('div');
+  qa.id = 'qa';
+  frameDocument.body.append(qa);
+
   const parsed = frameDocument.createElement('template');
   parsed.innerHTML = html;
+  const duplicateQa = parsed.content.querySelector('.prettify-flashcard#qa');
+  if (duplicateQa) duplicateQa.removeAttribute('id');
   const scripts = [...parsed.content.querySelectorAll('script')];
   for (const script of scripts) script.remove();
-  frameDocument.body.append(parsed.content.cloneNode(true));
+  qa.append(parsed.content.cloneNode(true));
 
   for (const sourceScript of scripts) {
     const script = frameDocument.createElement('script');
     for (const attribute of sourceScript.attributes) script.setAttribute(attribute.name, attribute.value);
     script.textContent = sourceScript.textContent;
-    frameDocument.body.append(script);
+    qa.append(script);
   }
 }
 
@@ -317,10 +326,18 @@ async function render({ reloadTemplate = false, reloadCss = false } = {}) {
         wait(2500),
       ]);
       const rubikLoaded = frameDocument.fonts.check('16px "Rubik"');
+      const cardFont = frameDocument.querySelector('.prettify-flashcard')
+        ? frameDocument.defaultView.getComputedStyle(frameDocument.querySelector('.prettify-flashcard')).fontFamily
+        : '';
+      const rubikApplied = /(^|["',\s])Rubik(["',\s]|$)/i.test(cardFont);
       setStatus(
         elements.fontStatus,
-        rubikLoaded ? 'Rubik loaded' : 'Rubik unavailable — using fallback',
-        rubikLoaded ? 'ok' : 'warn',
+        rubikLoaded && rubikApplied
+          ? 'Rubik loaded'
+          : rubikLoaded
+            ? 'Rubik loaded but not applied'
+            : 'Rubik unavailable — using fallback',
+        rubikLoaded && rubikApplied ? 'ok' : 'warn',
       );
     } else {
       setStatus(elements.fontStatus, 'Font API unavailable', 'warn');

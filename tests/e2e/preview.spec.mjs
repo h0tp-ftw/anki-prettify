@@ -10,7 +10,9 @@ async function openHarness(page, query = '') {
   await page.goto(`/tools/preview/${query}`);
   await expect(page.locator('#runtime-status')).toHaveText('No runtime errors');
   await expect(page.locator('#font-status')).toHaveText('Rubik loaded');
-  await expect(page.frameLocator('#card-frame').locator('.prettify-flashcard')).toBeVisible();
+  const card = page.frameLocator('#card-frame').locator('.prettify-flashcard');
+  await expect(card).toBeVisible();
+  await expect(card).toHaveCSS('font-family', /Rubik/);
   return errors;
 }
 
@@ -108,8 +110,8 @@ test('live editors update fields, template, and CSS and can reset them', async (
   await expect(frame.locator('.prettify-tag')).toHaveCount(2);
 
   const css = await page.locator('#css-editor').inputValue();
-  await page.locator('#css-editor').fill(`${css}\n#qa { outline: 7px solid rgb(1, 2, 3); }`);
-  await expect(frame.locator('#qa')).toHaveCSS('outline-width', '7px');
+  await page.locator('#css-editor').fill(`${css}\n.prettify-flashcard { outline: 7px solid rgb(1, 2, 3); }`);
+  await expect(frame.locator('.prettify-flashcard')).toHaveCSS('outline-width', '7px');
 
   const template = await page.locator('#template-editor').inputValue();
   await page.locator('#template-editor').fill(
@@ -121,7 +123,7 @@ test('live editors update fields, template, and CSS and can reset them', async (
   await expect(frame.locator('.live-template-marker')).toHaveCount(0);
 
   await page.locator('#reset-css').click();
-  await expect(frame.locator('#qa')).toHaveCSS('outline-style', 'none');
+  await expect(frame.locator('.prettify-flashcard')).toHaveCSS('outline-style', 'none');
 
   await page.locator('#reset-fields').click();
   await expect(page.locator('#field-front')).toHaveValue(/three core findings/);

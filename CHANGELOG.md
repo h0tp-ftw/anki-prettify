@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added explicit cleanup for observers, keyboard listeners, fullscreen clones, and other state when Anki reuses its review webview
 - Replaced destructive field-wide whitespace regex rewriting with conservative empty-edge trimming
 - Corrected the Nord font stack so Rubik is selected, and added hosted-preview font loading with fallback diagnostics
+- Made the browser preview reproduce Anki's outer `#qa` wrapper so theme selectors, sizing, and Rubik typography are actually applied to the rendered card
 
 ## [0.1.3] - 2023-01-15
 
