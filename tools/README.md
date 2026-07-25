@@ -6,7 +6,7 @@ Run `npm run preview`, then open `http://127.0.0.1:4173/tools/preview/`.
 
 The harness loads the declarative templates, shared `src/runtime/card.js`, and compiled CSS directly from `src/`. It injects the runtime exactly as packaging does, renders Anki field and conditional syntax, and executes the self-contained result inside a persistent iframe. Use **Next card in same webview** to reproduce the document reuse that can expose leaked listeners or stale state in Anki.
 
-Fixtures cover rich formatting, empty optional fields, code/tables, nested tags, long deck names, and multiple images. The harness can switch note type, side, reverse-card direction, light/night mode, and desktop/mobile dimensions. It also exposes source-copy links, runtime errors, unresolved tokens, and an interaction smoke test.
+Fixtures cover rich formatting, empty optional fields, code/tables, nested tags, long deck names, and multiple images. The harness can switch note type, side, reverse-card direction, light/night mode, and desktop/mobile dimensions. Live controls edit the current note fields, selected template, and theme CSS without writing to disk; reset buttons restore the checked-in sources. It also exposes source-copy links, runtime errors, unresolved tokens, and an interaction smoke test.
 
 ## Checks
 

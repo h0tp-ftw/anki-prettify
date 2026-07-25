@@ -129,7 +129,7 @@ Tested on
 
 **Hosted preview:** https://h0tp-ftw.github.io/anki-prettify/
 
-The repository includes a browser harness that renders the checked-in Anki templates and compiled CSS directly. It supports Basic, Basic + Reverse, and Cloze cards; front and back sides; light and night mode; desktop and mobile dimensions; rich fixtures; same-webview card changes; source-copy actions; runtime diagnostics; and an interaction smoke test.
+The repository includes a browser harness that renders the checked-in Anki templates and compiled CSS directly. It supports Basic, Basic + Reverse, and Cloze cards; front and back sides; light and night mode; desktop and mobile dimensions; rich fixtures; live field/template/CSS editing; same-webview card changes; source-copy actions; runtime diagnostics; and an interaction smoke test.
 
 ### First-time setup
 
@@ -150,7 +150,7 @@ Open **Terminal → Run Task** to start the preview, run fast checks, exercise t
 npm run preview
 ```
 
-Open `http://127.0.0.1:4173/tools/preview/`. Changes under `src/templates`, `src/runtime`, `src/styles`, and `tools/preview` reload automatically. The **Next card in same webview** action is useful for finding event-listener and state leaks that only appear after several Anki reviews.
+Open `http://127.0.0.1:4173/tools/preview/`. Changes under `src/templates`, `src/runtime`, `src/styles`, and `tools/preview` reload automatically. The **Live content** controls update note fields immediately, while the advanced **Source editor** lets you experiment with the selected template and theme CSS. Browser edits remain in the current tab and can be restored with the reset buttons; they do not write to the repository. The **Next card in same webview** action is useful for finding event-listener and state leaks that only appear after several Anki reviews.
 
 ### Validate changes
 
@@ -160,7 +160,7 @@ npm run test:browser
 npm run test:e2e
 ```
 
-`npm run check` validates the shared runtime, template markers, renderer behavior, and SCSS/CSS synchronization. `npm run test:browser` uses an installed Chrome, Chromium, or Edge for a quick real-browser interaction check. The Playwright suite exercises the full card matrix, image zoom, Escape cleanup, mobile/night-mode classes, and repeated card renders in one webview.
+`npm run check` validates the shared runtime, template markers, renderer behavior, and SCSS/CSS synchronization. `npm run test:browser` uses an installed Chrome, Chromium, or Edge for a quick real-browser interaction check. The Playwright suite exercises the full card matrix, live field/template/CSS editing and resets, image zoom, Escape cleanup, mobile/night-mode classes, and repeated card renders in one webview.
 
 ### Build packages
 
