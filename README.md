@@ -13,6 +13,12 @@
 
 ![Nord theme cover](res/images/nord-cover.png)
 
+## See it in motion
+
+![Live Anki Prettify preview and editor walkthrough](res/gifs/preview-editor.gif)
+
+The walkthrough shows live field editing, light and night modes, desktop and mobile layouts, front/back rendering, progressive image zoom, fullscreen cleanup, and Cloze rendering. Try it yourself in the **[hosted preview and editor](https://h0tp-ftw.github.io/anki-prettify/)**.
+
 ## What this fork is
 
 This repository is not the unchanged upstream multi-theme collection. It is a maintained, deliberately narrower variant built around the existing **Nord** package name and note-type IDs.
@@ -188,6 +194,14 @@ npm run check
 npm run test:browser
 npm run test:e2e
 ```
+
+Regenerate the README walkthrough GIF after meaningful preview changes:
+
+```powershell
+npm run preview:capture
+```
+
+This command launches the local preview in Playwright and uses `ffmpeg` to write `res/gifs/preview-editor.gif`.
 
 - `npm run check` validates templates, renderer behavior, runtime syntax, and SCSS/CSS synchronization.
 - `npm run test:browser` exercises a smoke matrix in an installed Chrome, Chromium, or Edge browser.

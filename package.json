@@ -16,7 +16,8 @@
     "css:check": "node tools/check-css.mjs",
     "check": "npm run templates:check && npm run test && npm run css:check",
     "package": "node tools/run-build.mjs",
-    "preview:export": "node tools/preview/export-static.mjs"
+    "preview:export": "node tools/preview/export-static.mjs",
+    "preview:capture": "node tools/preview/capture-readme.mjs"
   },
   "devDependencies": {
     "@fontsource/rubik": "5.3.0",
