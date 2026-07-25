@@ -10,12 +10,17 @@ import { chromium } from '@playwright/test';
 const root = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const port = 4177;
 const baseUrl = `http://127.0.0.1:${port}/tools/preview/`;
-const cursorEnabled = process.argv.includes('--cursor');
+const cursorV2Enabled = process.argv.includes('--cursor-v2');
+const cursorEnabled = process.argv.includes('--cursor') || cursorV2Enabled;
 const output = join(
   root,
   'res',
   'gifs',
-  cursorEnabled ? 'preview-editor-cursor.gif' : 'preview-editor.gif',
+  cursorV2Enabled
+    ? 'preview-editor-cursor-v2.gif'
+    : cursorEnabled
+      ? 'preview-editor-cursor.gif'
+      : 'preview-editor.gif',
 );
 const temporary = await mkdtemp(join(tmpdir(), 'anki-prettify-readme-'));
 const videoDirectory = join(temporary, 'video');
@@ -41,7 +46,8 @@ async function waitForServer() {
 }
 
 async function pause(page, milliseconds = 700) {
-  await page.waitForTimeout(milliseconds);
+  const duration = cursorV2Enabled ? Math.max(180, Math.round(milliseconds * 0.72)) : milliseconds;
+  await page.waitForTimeout(duration);
 }
 
 async function installCursorOverlay(page) {
@@ -49,15 +55,21 @@ async function installCursorOverlay(page) {
 
   await page.addStyleTag({
     content: `
-      @keyframes demo-cursor-ripple {
-        from { opacity: 0.95; transform: translate(-50%, -50%) scale(0.3); }
-        to { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+      @keyframes demo-cursor-dot {
+        0% { opacity: 0.95; transform: translate(-50%, -50%) scale(0.45); }
+        55% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(1.45); }
+      }
+
+      @keyframes demo-cursor-press {
+        0%, 100% { transform: scale(1); }
+        45% { transform: scale(0.78); }
       }
 
       @keyframes demo-cursor-badge {
-        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
-        20%, 75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.72); }
+        18%, 72% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
       }
 
       #demo-cursor {
@@ -73,7 +85,12 @@ async function installCursorOverlay(page) {
         z-index: 2147483647;
       }
 
-      .demo-cursor-ripple,
+      #demo-cursor.is-clicking svg {
+        animation: demo-cursor-press 220ms ease-out;
+        transform-origin: 3px 3px;
+      }
+
+      .demo-cursor-dot,
       .demo-cursor-badge {
         left: 0;
         pointer-events: none;
@@ -82,27 +99,64 @@ async function installCursorOverlay(page) {
         z-index: 2147483646;
       }
 
-      .demo-cursor-ripple {
-        animation: demo-cursor-ripple 650ms ease-out forwards;
-        border: 3px solid #f9e2af;
+      .demo-cursor-dot {
+        animation: demo-cursor-dot 320ms ease-out forwards;
+        background: #f9e2af;
         border-radius: 999px;
-        height: 34px;
-        width: 34px;
+        box-shadow: 0 0 0 2px rgba(46, 52, 64, 0.72);
+        height: 9px;
+        width: 9px;
       }
 
       .demo-cursor-badge {
         align-items: center;
-        animation: demo-cursor-badge 850ms ease-out forwards;
+        animation: demo-cursor-badge 720ms ease-out forwards;
         background: #f9e2af;
-        border: 2px solid #2e3440;
+        border: 1px solid #2e3440;
         border-radius: 999px;
         color: #2e3440;
         display: flex;
-        font: 700 16px/1 Rubik, Arial, sans-serif;
-        height: 30px;
+        font: 700 13px/1 Rubik, Arial, sans-serif;
+        height: 24px;
         justify-content: center;
-        width: 30px;
+        width: 24px;
       }
+
+      ${cursorV2Enabled ? `
+        html,
+        body {
+          height: 100%;
+          overflow: hidden;
+        }
+
+        body {
+          display: grid;
+          grid-template-rows: auto minmax(0, 1fr);
+        }
+
+        .workspace {
+          height: auto;
+          min-height: 0;
+          overflow: hidden;
+        }
+
+        .controls,
+        .stage {
+          min-height: 0;
+        }
+
+        .stage {
+          overflow: hidden;
+        }
+
+        .viewport-frame {
+          height: min(100%, 58rem);
+        }
+
+        .viewport-frame--mobile {
+          height: min(100%, 48rem);
+        }
+      ` : ''}
     `,
   });
 
@@ -126,10 +180,30 @@ async function installCursorOverlay(page) {
   });
 }
 
-async function moveCursor(page, locator, duration = 520) {
+async function assertPreviewVisible(page) {
+  if (!cursorV2Enabled) return;
+
+  const geometry = await page.evaluate(() => {
+    const frame = document.querySelector('#viewport-frame');
+    const box = frame.getBoundingClientRect();
+    return {
+      bottom: box.bottom,
+      height: window.innerHeight,
+      scrollY: window.scrollY,
+      top: box.top,
+    };
+  });
+
+  if (geometry.scrollY !== 0 || geometry.top < 0 || geometry.bottom > geometry.height + 1) {
+    throw new Error(`Cursor capture moved the card preview outside the video frame: ${JSON.stringify(geometry)}`);
+  }
+}
+
+async function moveCursor(page, locator, duration = cursorV2Enabled ? 340 : 520) {
   if (!cursorEnabled) return;
 
   await locator.scrollIntoViewIfNeeded();
+  await assertPreviewVisible(page);
   const box = await locator.boundingBox();
   if (!box) throw new Error('Could not locate a cursor target in the viewport.');
 
@@ -158,20 +232,24 @@ async function showCursorClick(page, label = '') {
     const x = Number(cursor.dataset.x);
     const y = Number(cursor.dataset.y);
 
-    const ripple = document.createElement('span');
-    ripple.className = 'demo-cursor-ripple';
-    ripple.style.transformOrigin = `${x}px ${y}px`;
-    ripple.style.left = `${x}px`;
-    ripple.style.top = `${y}px`;
-    document.body.appendChild(ripple);
-    ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+    cursor.classList.remove('is-clicking');
+    void cursor.offsetWidth;
+    cursor.classList.add('is-clicking');
+    setTimeout(() => cursor.classList.remove('is-clicking'), 240);
+
+    const dot = document.createElement('span');
+    dot.className = 'demo-cursor-dot';
+    dot.style.left = `${x + 3}px`;
+    dot.style.top = `${y + 3}px`;
+    document.body.appendChild(dot);
+    dot.addEventListener('animationend', () => dot.remove(), { once: true });
 
     if (label) {
       const badge = document.createElement('span');
       badge.className = 'demo-cursor-badge';
       badge.textContent = label;
-      badge.style.left = `${x + 34}px`;
-      badge.style.top = `${y - 28}px`;
+      badge.style.left = `${x + 29}px`;
+      badge.style.top = `${y - 22}px`;
       document.body.appendChild(badge);
       badge.addEventListener('animationend', () => badge.remove(), { once: true });
     }

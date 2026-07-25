@@ -18,7 +18,8 @@
     "package": "node tools/run-build.mjs",
     "preview:export": "node tools/preview/export-static.mjs",
     "preview:capture": "node tools/preview/capture-readme.mjs",
-    "preview:capture:cursor": "node tools/preview/capture-readme.mjs --cursor"
+    "preview:capture:cursor": "node tools/preview/capture-readme.mjs --cursor",
+    "preview:capture:cursor:v2": "node tools/preview/capture-readme.mjs --cursor-v2"
   },
   "devDependencies": {
     "@fontsource/rubik": "5.3.0",
