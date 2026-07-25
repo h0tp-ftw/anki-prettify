@@ -132,8 +132,8 @@ try {
     assert.doesNotMatch(dom, /Smoke test failed/, `${testCase.name}: smoke test reported failure`);
     assert.match(
       dom,
-      /font-status[^>]*>(?:Rubik loaded|Rubik unavailable — using fallback)</,
-      `${testCase.name}: font diagnostic did not settle`,
+      /font-status[^>]*>Rubik loaded</,
+      `${testCase.name}: self-hosted Rubik did not load`,
     );
     assert.doesNotMatch(dom, /runtime-status[^>]*>[^<]*runtime error/i, `${testCase.name}: runtime error reported`);
     console.log(`Passed: ${testCase.name}`);

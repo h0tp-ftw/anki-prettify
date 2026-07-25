@@ -19,6 +19,7 @@
     "preview:export": "node tools/preview/export-static.mjs"
   },
   "devDependencies": {
+    "@fontsource/rubik": "5.3.0",
     "@playwright/test": "1.62.0",
     "sass": "1.97.1"
   },

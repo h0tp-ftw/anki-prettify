@@ -64,8 +64,6 @@ const state = {
   viewport: query.get('viewport') || 'desktop',
 };
 
-const PREVIEW_FONT_STYLESHEET = 'https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap';
-
 let rawTemplate = '';
 let defaultTemplate = '';
 let rawRuntime = '';
@@ -177,6 +175,13 @@ async function fetchText(url) {
   return response.text();
 }
 
+function resolveStylesheetAssets(css, stylesheet) {
+  return css.replace(
+    /url\(["']?(_Rubik-[^)"']+\.woff2)["']?\)/g,
+    (_match, filename) => `url("${new URL(filename, stylesheet).href}")`,
+  );
+}
+
 async function loadSources({ resetTemplate = true, resetCss = true } = {}) {
   const template = templateUrl(state.noteType, state.side);
   const runtime = runtimeUrl();
@@ -194,8 +199,8 @@ async function loadSources({ resetTemplate = true, resetCss = true } = {}) {
   }
   rawRuntime = runtimeSource;
   if (resetCss) {
-    compiledCss = cssSource;
-    defaultCss = cssSource;
+    compiledCss = resolveStylesheetAssets(cssSource, stylesheet);
+    defaultCss = compiledCss;
   }
 
   elements.viewTemplate.href = template.href;
@@ -241,9 +246,6 @@ async function initializeFrame() {
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="${PREVIEW_FONT_STYLESHEET}">
     <style id="anki-theme"></style>
     <script>${bridgeScript().replaceAll('</script>', '<\\/script>')}<\/script>
   </head>
@@ -311,7 +313,7 @@ async function render({ reloadTemplate = false, reloadCss = false } = {}) {
     const frameDocument = elements.cardFrame.contentDocument;
     if (frameDocument?.fonts) {
       await Promise.race([
-        frameDocument.fonts.ready,
+        frameDocument.fonts.load('16px "Rubik"'),
         wait(2500),
       ]);
       const rubikLoaded = frameDocument.fonts.check('16px "Rubik"');

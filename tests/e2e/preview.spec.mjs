@@ -9,6 +9,7 @@ async function openHarness(page, query = '') {
 
   await page.goto(`/tools/preview/${query}`);
   await expect(page.locator('#runtime-status')).toHaveText('No runtime errors');
+  await expect(page.locator('#font-status')).toHaveText('Rubik loaded');
   await expect(page.frameLocator('#card-frame').locator('.prettify-flashcard')).toBeVisible();
   return errors;
 }

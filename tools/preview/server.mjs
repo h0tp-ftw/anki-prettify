@@ -8,6 +8,14 @@ const args = process.argv.slice(2);
 const portIndex = args.indexOf('--port');
 const port = Number(portIndex >= 0 ? args[portIndex + 1] : process.env.PORT || 4173);
 const clients = new Set();
+const rubikPackage = join(root, 'node_modules', '@fontsource', 'rubik');
+const virtualFiles = new Map([
+  ['/src/styles/css/_Rubik-Regular.woff2', join(rubikPackage, 'files', 'rubik-latin-400-normal.woff2')],
+  ['/src/styles/css/_Rubik-Bold.woff2', join(rubikPackage, 'files', 'rubik-latin-700-normal.woff2')],
+  ['/src/styles/css/_Rubik-Italic.woff2', join(rubikPackage, 'files', 'rubik-latin-400-italic.woff2')],
+  ['/src/styles/css/_Rubik-BoldItalic.woff2', join(rubikPackage, 'files', 'rubik-latin-700-italic.woff2')],
+  ['/src/styles/css/Rubik-OFL.txt', join(rubikPackage, 'LICENSE')],
+]);
 
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -22,7 +30,7 @@ const mimeTypes = {
 
 function sendFile(pathname, response) {
   const decoded = decodeURIComponent(pathname);
-  const requested = normalize(join(root, decoded));
+  const requested = virtualFiles.get(decoded) || normalize(join(root, decoded));
   const location = relative(root, requested);
 
   if (location.startsWith('..') || location.includes(`..${process.platform === 'win32' ? '\\' : '/'}`)) {

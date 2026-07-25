@@ -78,18 +78,26 @@ test('Nord selects Rubik before system fallbacks', async () => {
   }
 });
 
-test('preview loads and reports the hosted Rubik font', async () => {
-  const [html, app, previewCss] = await Promise.all([
+test('preview self-hosts and reports the Rubik font', async () => {
+  const [html, app, previewCss, exporter, server, packageJson] = await Promise.all([
     readFile(new URL('../tools/preview/index.html', import.meta.url), 'utf8'),
     readFile(new URL('../tools/preview/app.mjs', import.meta.url), 'utf8'),
     readFile(new URL('../tools/preview/preview.css', import.meta.url), 'utf8'),
+    readFile(new URL('../tools/preview/export-static.mjs', import.meta.url), 'utf8'),
+    readFile(new URL('../tools/preview/server.mjs', import.meta.url), 'utf8'),
+    readFile(new URL('../package.json', import.meta.url), 'utf8'),
   ]);
 
-  assert.match(html, /fonts\.googleapis\.com\/css2\?family=Rubik/);
+  assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
   assert.match(html, /id="font-status"/);
-  assert.match(app, /PREVIEW_FONT_STYLESHEET/);
+  assert.doesNotMatch(app, /PREVIEW_FONT_STYLESHEET|fonts\.googleapis\.com/);
+  assert.match(app, /resolveStylesheetAssets/);
   assert.match(app, /fonts\.check\('16px "Rubik"'\)/);
-  assert.match(previewCss, /font-family:\s*"Rubik"/);
+  assert.match(previewCss, /url\("\.\.\/\.\.\/src\/styles\/css\/_Rubik-Regular\.woff2"\)/);
+  assert.match(exporter, /rubik-latin-400-normal\.woff2/);
+  assert.match(exporter, /Rubik-OFL\.txt/);
+  assert.match(server, /_Rubik-Regular\.woff2/);
+  assert.match(packageJson, /"@fontsource\/rubik": "5\.3\.0"/);
 });
 
 test('template field contracts remain aligned with note types', async () => {

@@ -1,3 +1,35 @@
+@font-face {
+  font-family: "Rubik";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../src/styles/css/_Rubik-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rubik";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../src/styles/css/_Rubik-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rubik";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../src/styles/css/_Rubik-Italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rubik";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../src/styles/css/_Rubik-BoldItalic.woff2") format("woff2");
+}
+
 :root {
   color-scheme: light dark;
   font-family: "Rubik", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
