@@ -1,14 +1,30 @@
-# Automate building demo packages from source code
+"""Build Anki packages from source without modifying the source tree."""
 
+from __future__ import annotations
+
+import argparse
 import json
-import os
 import re
-import sys
+from contextlib import closing
+from functools import cache
+import shutil
+import sqlite3
+import subprocess
 from pathlib import Path
-from random import randrange
+from tempfile import TemporaryDirectory
+from typing import Any
+from zipfile import ZIP_DEFLATED, ZipFile
 
-import genanki
-import requests
+try:
+    import genanki
+except ModuleNotFoundError as error:
+    raise SystemExit(
+        "Missing Python build dependencies. Run `python -m pip install -r tools/requirements.txt`."
+    ) from error
+
+ROOT = Path(__file__).resolve().parent.parent
+VERSION_PATTERN = re.compile(r"Version: (?P<version>\d+(?:\.\d+)+)")
+RUNTIME_MARKER = "<!-- PRETTIFY_RUNTIME -->"
 
 FONTS = {
     "minimal": "Inter",
@@ -16,209 +32,411 @@ FONTS = {
     "dracula": "Source Sans Pro",
 }
 
-# Field contents for each note type
 NOTE_FIELDS = {
     "basic": [
         "What is <b>Anki</b>?",
-        "<b>Anki</b>&nbsp;is a <u>free and open-source</u>&nbsp;flashcard&nbsp;program using&nbsp;<i>spaced repetition</i>, a technique from&nbsp;cognitive science&nbsp;for fast and long-lasting memorization.<br><br><img src='https://upload.wikimedia.org/wikipedia/commons/9/9a/Anki_2.1.6_screenshot.png'><br>Anki 2.1.6 screenshot (<a href='https://en.wikipedia.org/wiki/Anki_(software)'>https://en.wikipedia.org/wiki/Anki_(software)</a>)",
+        "<b>Anki</b>&nbsp;is a <u>free and open-source</u>&nbsp;flashcard&nbsp;program using&nbsp;<i>spaced repetition</i>, a technique from cognitive science for fast and long-lasting memorization.<br><br><img src='https://upload.wikimedia.org/wikipedia/commons/9/9a/Anki_2.1.6_screenshot.png'>",
     ],
     "basic_reverse": [
         "What is <b>Anki</b>?",
-        "<b>Anki</b>&nbsp;is a <u>free and open-source</u>&nbsp;flashcard&nbsp;program using&nbsp;<i>spaced repetition</i>, a technique from&nbsp;cognitive science&nbsp;for fast and long-lasting memorization.<br><br><img src='https://upload.wikimedia.org/wikipedia/commons/9/9a/Anki_2.1.6_screenshot.png'><br>Anki 2.1.6 screenshot (<a href='https://en.wikipedia.org/wiki/Anki_(software)'>https://en.wikipedia.org/wiki/Anki_(software)</a>)",
+        "<b>Anki</b>&nbsp;is a <u>free and open-source</u>&nbsp;flashcard&nbsp;program using&nbsp;<i>spaced repetition</i>, a technique from cognitive science for fast and long-lasting memorization.<br><br><img src='https://upload.wikimedia.org/wikipedia/commons/9/9a/Anki_2.1.6_screenshot.png'>",
     ],
     "cloze": [
-        "<b>Anki</b>&nbsp;is a <u>free and open-source</u>&nbsp;{{c1::flashcard}}&nbsp;program using&nbsp;<i>spaced repetition</i>, a technique from&nbsp;cognitive science&nbsp;for fast and long-lasting memorization.<br><br><img src='https://upload.wikimedia.org/wikipedia/commons/9/9a/Anki_2.1.6_screenshot.png'>",
-        "Anki 2.1.6 screenshot (<a href='https://en.wikipedia.org/wiki/Anki_(software)'>https://en.wikipedia.org/wiki/Anki_(software)</a>)",
+        "<b>Anki</b>&nbsp;is a <u>free and open-source</u>&nbsp;{{c1::flashcard}}&nbsp;program using&nbsp;<i>spaced repetition</i>, a technique from cognitive science for fast and long-lasting memorization.<br><br><img src='https://upload.wikimedia.org/wikipedia/commons/9/9a/Anki_2.1.6_screenshot.png'>",
+        "Anki screenshot (<a href='https://en.wikipedia.org/wiki/Anki_(software)'>Wikipedia</a>)",
     ],
 }
 
-# Store the root path for future use
-root = Path(f"{__file__}/../..").resolve()
-
-semver_regex = re.compile(
-    r"(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)"
-)
-
-# Get latest version release number
-try:
-    last_rel_ver = requests.get(
-        "https://api.github.com/repos/pranavdeshai/anki-prettify/releases/latest"
-    ).json()["tag_name"]
-except KeyError:
-    with open(
-        root / "src" / "templates" / "default" / "basic" / "basic-front.html"
-    ) as f:
-        s = f.read()
-    last_rel_ver = semver_regex.search(s).group()  # type:ignore
-
-# Get the new version number
-new_ver = sys.argv[1] if len(sys.argv) > 1 else "1.0"
-print(f"Building with version {new_ver}")
-
-# Update version number in SCSS files
-if new_ver != last_rel_ver:
-    for x in root.glob("**/scss/*.scss"):
-        with x.open("r+") as f:
-            s = f.read()
-            s = re.sub(r"Version: \d+(\.\d+)+", f"Version: {new_ver}", s)
-            f.seek(0)
-            f.write(s)
-            f.truncate()
-    print("Updated version in SCSS files")
-
-# Compile SCSS to CSS
-os.system(
-    f"sass --no-source-map {str(root / 'src' / 'styles' / 'scss')}:{str(root / 'src' / 'styles' / 'css')}"
-)
-print("Compiled SCSS to CSS")
-
-# Update genanki IDs
-with open(root / "tools" / "ids.json", "r+") as ids_file:
-    ids = json.load(ids_file)
-    ids_file.seek(0)
-
-    for i in root.glob("**/css/*.css"):
-        theme = i.stem
-
-        if theme not in ids:
-            ids[theme] = {}
-            print(f"Added new theme to IDs: {theme}")
-
-        for j in root.glob("**/templates/default/*"):
-            if j.is_dir():
-                notetype = j.stem
-
-                if notetype not in ids[theme]:
-                    ids[theme][notetype] = {
-                        "model_id": randrange(1 << 30, 1 << 31),
-                        "deck_id": randrange(1 << 30, 1 << 31),
-                        "note_id": randrange(1 << 30, 1 << 31),
-                    }
-                    print(f"Added new notetype to IDs: {notetype}")
-
-    json.dump(ids, ids_file, indent=4)
-    print("Updated ids.json")
+TYPE_NAMES = {
+    "basic": "Basic",
+    "basic_reverse": "Reverse",
+    "cloze": "Cloze",
+}
 
 
-# Generate deck packages
-decks = {}
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--version",
+        help="Version embedded in generated model names and source comments. Defaults to the current template version.",
+    )
+    parser.add_argument(
+        "--theme",
+        dest="themes",
+        action="append",
+        help="Theme to build. Repeat for multiple themes. Defaults to every theme present in tools/ids.json.",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=ROOT / "dist",
+        help="Generated output directory (default: dist).",
+    )
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Remove the output directory before building.",
+    )
+    parser.add_argument(
+        "--use-checked-in-css",
+        action="store_true",
+        help="Skip Sass compilation and package src/styles/css directly.",
+    )
+    return parser.parse_args()
 
-# Process only the 'nord' theme
-themes_to_build = ['nord']
 
-for t in themes_to_build:
-    if t not in ids:
-        print(f"Warning: Theme '{t}' not found in ids.json. Skipping.")
-        continue
+def current_version() -> str:
+    source = (
+        ROOT / "src" / "templates" / "default" / "basic" / "basic-front.html"
+    ).read_text(encoding="utf-8")
+    match = VERSION_PATTERN.search(source)
+    if not match:
+        raise RuntimeError("Could not find a Version comment in the basic front template.")
+    return match.group("version")
 
-    for n in ids[t]:
-        with open(
-            (root / "src" / "templates" / "default" / n / f"{n}-front.html"),
-            "r+",
-        ) as f1, open(
-            (root / "src" / "templates" / "default" / n / f"{n}-back.html"), "r+"
-        ) as f2, open((root / "src" / "styles" / "css" / f"{t}.css")) as f3:
-            front_html = f1.read()
-            back_html = f2.read()
-            css = f3.read()
 
-            # Update version number in templates
-            if new_ver != last_rel_ver:
-                front_html = re.sub(r"Version: \d+(\.\d+)+", f"Version: {new_ver}", front_html)
-                back_html = re.sub(r"Version: \d+(\.\d+)+", f"Version: {new_ver}", back_html)
+def with_version(source: str, version: str) -> str:
+    return VERSION_PATTERN.sub(f"Version: {version}", source)
 
-                f1.seek(0)
-                f2.seek(0)
 
-                f1.write(front_html)
-                f2.write(back_html)
+def sass_command() -> list[str]:
+    local_sass = ROOT / "node_modules" / "sass" / "sass.js"
+    node = shutil.which("node")
+    if local_sass.exists() and node:
+        return [node, str(local_sass)]
 
-                f1.truncate()
-                f2.truncate()
+    installed = shutil.which("sass")
+    if installed:
+        return [installed]
 
-        if n == "basic_reverse":
-            # Basic reverse requires two card templates
-            templates = [
-                {
-                    "name": "Card 1",
-                    "qfmt": front_html,
-                    "afmt": back_html,
-                },
-                {
-                    "name": "Card 2",
-                    "qfmt": front_html.replace("{{edit:Front}}", "{{edit:Back}}"),
-                    "afmt": back_html.replace("{{edit:Front}}", "{{edit:Back}}").replace("{{Back}}", "{{Front}}"),
-                },
-            ]
-        else:
-            templates = [
-                {
-                    "name": "Card 1",
-                    "qfmt": front_html,
-                    "afmt": back_html,
-                }
-            ]
+    raise RuntimeError(
+        "Sass is not installed. Run `npm install`, or pass --use-checked-in-css."
+    )
 
-        model_fields = [
+
+def compile_css(theme: str, destination: Path) -> str:
+    source = ROOT / "src" / "styles" / "scss" / f"{theme}.scss"
+    if not source.exists():
+        raise FileNotFoundError(f"Missing SCSS source for theme {theme}: {source}")
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        [*sass_command(), "--no-source-map", "--style=expanded", str(source), str(destination)],
+        cwd=ROOT,
+        check=True,
+    )
+    return destination.read_text(encoding="utf-8")
+
+
+def load_css(theme: str, output: Path, use_checked_in: bool) -> str:
+    if use_checked_in:
+        source = ROOT / "src" / "styles" / "css" / f"{theme}.css"
+        if not source.exists():
+            raise FileNotFoundError(f"Missing checked-in CSS for theme {theme}: {source}")
+        return source.read_text(encoding="utf-8")
+
+    return compile_css(theme, output / "styles" / "css" / f"{theme}.css")
+
+
+def load_ids() -> dict[str, dict[str, dict[str, int]]]:
+    with (ROOT / "tools" / "ids.json").open(encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+@cache
+def card_runtime() -> str:
+    path = ROOT / "src" / "runtime" / "card.js"
+    if not path.exists():
+        raise FileNotFoundError(f"Missing shared card runtime: {path}")
+    return path.read_text(encoding="utf-8").strip()
+
+
+def inject_runtime(template: str) -> str:
+    marker_count = template.count(RUNTIME_MARKER)
+    if marker_count != 1:
+        raise RuntimeError(
+            f"Expected exactly one {RUNTIME_MARKER} marker, found {marker_count}."
+        )
+    script = (
+        "<script>\n"
+        "/* Generated from src/runtime/card.js */\n"
+        f"{card_runtime()}\n"
+        "</script>"
+    )
+    return template.replace(RUNTIME_MARKER, script)
+
+
+def read_template(note_type: str, side: str, version: str) -> str:
+    path = (
+        ROOT
+        / "src"
+        / "templates"
+        / "default"
+        / note_type
+        / f"{note_type}-{side}.html"
+    )
+    if not path.exists():
+        raise FileNotFoundError(f"Missing template: {path}")
+    source = with_version(path.read_text(encoding="utf-8"), version)
+    return inject_runtime(source)
+
+
+def card_templates(note_type: str, front: str, back: str) -> list[dict[str, str]]:
+    templates = [{"name": "Card 1", "qfmt": front, "afmt": back}]
+    if note_type == "basic_reverse":
+        templates.append(
             {
-                # Cloze note types have different field names
-                "name": "Text" if n == "cloze" else "Front",
-                "font": FONTS[t],
-            },
-            {
-                "name": "Back Extra" if n == "cloze" else "Back",
-                "font": FONTS[t],
-            },
-        ]
+                "name": "Card 2",
+                "qfmt": front.replace("{{edit:Front}}", "{{edit:Back}}"),
+                "afmt": back.replace("{{edit:Front}}", "{{edit:Back}}").replace(
+                    "{{Back}}", "{{Front}}"
+                ),
+            }
+        )
+    return templates
 
-        TYPE_NAMES = {
-            "basic": "Basic",
-            "basic_reverse": "Reverse",
-            "cloze": "Cloze",
-        }
 
-        model = genanki.Model(
-            model_id=ids[t][n]["model_id"],
-            name=f"Prettify {TYPE_NAMES.get(n, n)} v{new_ver} (h0tp's mod)",
-            fields=model_fields,
-            templates=templates,
-            css=css,
-            model_type=genanki.Model.CLOZE
-            if n == "cloze"
-            else genanki.Model.FRONT_BACK,
+def model_fields(note_type: str, theme: str) -> list[dict[str, str]]:
+    font = FONTS.get(theme, "Arial")
+    return [
+        {"name": "Text" if note_type == "cloze" else "Front", "font": font},
+        {
+            "name": "Back Extra" if note_type == "cloze" else "Back",
+            "font": font,
+        },
+    ]
+
+
+def build_deck(
+    theme: str,
+    note_type: str,
+    identifiers: dict[str, int],
+    css: str,
+    version: str,
+) -> genanki.Deck:
+    front = read_template(note_type, "front", version)
+    back = read_template(note_type, "back", version)
+    model = genanki.Model(
+        model_id=identifiers["model_id"],
+        name=f"Prettify {TYPE_NAMES.get(note_type, note_type)} v{version} (h0tp's mod)",
+        fields=model_fields(note_type, theme),
+        templates=card_templates(note_type, front, back),
+        css=with_version(css, version),
+        model_type=(
+            genanki.Model.CLOZE
+            if note_type == "cloze"
+            else genanki.Model.FRONT_BACK
+        ),
+    )
+    deck = genanki.Deck(
+        identifiers["deck_id"],
+        f"Prettify::{theme.capitalize()}::{note_type.capitalize().replace('_', ' ')}",
+    )
+    note = genanki.Note(
+        guid=identifiers["note_id"],
+        fields=NOTE_FIELDS[note_type],
+        model=model,
+        tags=["prettify", f"prettify::{theme}", f"prettify::{theme}::{note_type}"],
+    )
+    deck.add_model(model)
+    deck.add_note(note)
+    return deck
+
+
+def verify_package(path: Path, expected_notes: int, expected_cards: int) -> None:
+    with ZipFile(path) as archive:
+        collection_name = next(
+            (name for name in archive.namelist() if name.startswith("collection.anki")),
+            None,
+        )
+        if not collection_name:
+            raise RuntimeError(f"Package has no Anki collection database: {path}")
+
+        with TemporaryDirectory(prefix="anki-prettify-") as temporary:
+            database_path = Path(archive.extract(collection_name, temporary))
+            with closing(sqlite3.connect(database_path)) as database:
+                note_count = database.execute("SELECT COUNT(*) FROM notes").fetchone()[0]
+                card_count = database.execute("SELECT COUNT(*) FROM cards").fetchone()[0]
+                models = json.loads(database.execute("SELECT models FROM col").fetchone()[0])
+
+    if note_count != expected_notes or card_count != expected_cards:
+        raise RuntimeError(
+            f"Unexpected package contents for {path}: "
+            f"{note_count} note(s), {card_count} card(s); expected "
+            f"{expected_notes} note(s), {expected_cards} card(s)."
         )
 
-        deck = genanki.Deck(
-            ids[t][n]["deck_id"],
-            f"Prettify::{t.capitalize()}::{n.capitalize().replace('_',' ')}",
+    if len(models) != expected_notes:
+        raise RuntimeError(
+            f"Unexpected model count for {path}: {len(models)}; expected {expected_notes}."
         )
 
-        note = genanki.Note(
-            guid=ids[t][n]["note_id"],
-            fields=NOTE_FIELDS[n],
-            model=model,
-            tags=["prettify", f"prettify::{t}", f"prettify::{t}::{n}"],
+    for model in models.values():
+        if not model.get("css", "").strip():
+            raise RuntimeError(f"Model has empty CSS in package: {path}")
+        for template in model.get("tmpls", []):
+            for key in ("qfmt", "afmt"):
+                source = template.get(key, "")
+                if RUNTIME_MARKER in source:
+                    raise RuntimeError(
+                        f"Unresolved runtime marker in {path}: "
+                        f"{template.get('name')} {key}"
+                    )
+                if "__ankiPrettifyRuntime" not in source:
+                    raise RuntimeError(
+                        f"Shared runtime missing from {path}: "
+                        f"{template.get('name')} {key}"
+                    )
+
+
+def export_manual_templates(
+    output: Path,
+    version: str,
+    css_by_theme: dict[str, str],
+) -> Path:
+    template_root = output / "templates" / "default"
+    for note_type in NOTE_FIELDS:
+        for side in ("front", "back"):
+            destination = template_root / note_type / f"{note_type}-{side}.html"
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(
+                read_template(note_type, side, version),
+                encoding="utf-8",
+            )
+
+    style_root = output / "styles" / "css"
+    style_root.mkdir(parents=True, exist_ok=True)
+    for theme, css in css_by_theme.items():
+        (style_root / f"{theme}.css").write_text(
+            with_version(css, version),
+            encoding="utf-8",
         )
 
-        deck.add_model(model)
-        deck.add_note(note)
+    instructions = f"""Anki Prettify manual templates v{version}
 
-        # Note type-wise packages
-        genanki.Package(deck).write_to_file(
-            root / "themes" / t / "notetypes" / f"prettify-{t}-{n}.apkg"
+1. Choose a front/back pair under templates/default/.
+2. Paste them into Anki's Cards editor.
+3. Paste the desired file from styles/css/ into Styling.
+4. Install the theme font separately if desired.
+
+The exported HTML is self-contained: the shared JavaScript runtime has already been inlined.
+"""
+    (output / "MANUAL-INSTALL.txt").write_text(instructions, encoding="utf-8")
+
+    archive_path = output / f"prettify-templates-v{version}.zip"
+    with ZipFile(archive_path, "w", compression=ZIP_DEFLATED) as archive:
+        for source_root in (template_root, style_root):
+            for file in source_root.rglob("*"):
+                if file.is_file():
+                    archive.write(file, file.relative_to(output))
+        archive.writestr("MANUAL-INSTALL.txt", instructions)
+
+    print(f"Wrote {archive_path.relative_to(ROOT)} with self-contained HTML and CSS.")
+    return archive_path
+
+
+def write_package(
+    decks: genanki.Deck | list[genanki.Deck],
+    path: Path,
+    *,
+    expected_notes: int,
+    expected_cards: int,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    genanki.Package(decks).write_to_file(path)
+    if not path.exists() or path.stat().st_size == 0:
+        raise RuntimeError(f"Package was not written correctly: {path}")
+    verify_package(path, expected_notes, expected_cards)
+    print(
+        f"Wrote and verified {path.relative_to(ROOT) if path.is_relative_to(ROOT) else path} "
+        f"({expected_notes} note(s), {expected_cards} card(s))"
+    )
+
+
+def main() -> None:
+    args = parse_args()
+    version = args.version or current_version()
+    output = args.output.resolve()
+
+    if args.clean and output.exists():
+        shutil.rmtree(output)
+    output.mkdir(parents=True, exist_ok=True)
+
+    ids = load_ids()
+    themes = args.themes or sorted(ids)
+    missing_themes = [theme for theme in themes if theme not in ids]
+    if missing_themes:
+        raise RuntimeError(
+            f"Missing stable IDs for theme(s): {', '.join(missing_themes)}. Add them to tools/ids.json explicitly."
         )
 
-        if t not in decks:
-            decks[t] = []
+    all_decks: list[genanki.Deck] = []
+    css_by_theme: dict[str, str] = {}
+    manifest: dict[str, Any] = {"version": version, "themes": {}, "packages": []}
 
-        decks[t].append(deck)
+    for theme in themes:
+        css = load_css(theme, output, args.use_checked_in_css)
+        css_by_theme[theme] = css
+        theme_decks: list[genanki.Deck] = []
+        manifest["themes"][theme] = []
 
-    # Theme-wise packages
-    genanki.Package(decks[t]).write_to_file(root / "themes" / t / f"prettify-{t}.apkg")
+        for note_type, identifiers in ids[theme].items():
+            if note_type not in NOTE_FIELDS:
+                raise RuntimeError(f"No sample note fields configured for note type: {note_type}")
+            deck = build_deck(theme, note_type, identifiers, css, version)
+            theme_decks.append(deck)
+            all_decks.append(deck)
+            manifest["themes"][theme].append(note_type)
 
-# Master package with only the 'nord' theme
-genanki.Package([d for x in decks.values() for d in x]).write_to_file(
-    root / "prettify.apkg"
-)
+            package_path = (
+                output
+                / "themes"
+                / theme
+                / "notetypes"
+                / f"prettify-{theme}-{note_type}.apkg"
+            )
+            write_package(
+                deck,
+                package_path,
+                expected_notes=1,
+                expected_cards=2 if note_type == "basic_reverse" else 1,
+            )
+            manifest["packages"].append(str(package_path.relative_to(output)).replace("\\", "/"))
 
-print("Generated all packages successfully")
+        theme_package = output / "themes" / theme / f"prettify-{theme}.apkg"
+        write_package(
+            theme_decks,
+            theme_package,
+            expected_notes=len(theme_decks),
+            expected_cards=sum(
+                2 if note_type == "basic_reverse" else 1
+                for note_type in ids[theme]
+            ),
+        )
+        manifest["packages"].append(str(theme_package.relative_to(output)).replace("\\", "/"))
+
+    manual_archive = export_manual_templates(output, version, css_by_theme)
+    manifest["manual_templates"] = manual_archive.name
+
+    master_package = output / "prettify.apkg"
+    write_package(
+        all_decks,
+        master_package,
+        expected_notes=len(all_decks),
+        expected_cards=sum(
+            2 if note_type == "basic_reverse" else 1
+            for theme in themes
+            for note_type in ids[theme]
+        ),
+    )
+    manifest["packages"].append(master_package.name)
+
+    (output / "manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(f"Built {len(all_decks)} deck(s) for version {version} without modifying source files.")
+
+
+if __name__ == "__main__":
+    main()

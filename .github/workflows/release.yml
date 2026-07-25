@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          npm install
+          python -m pip install -r tools/requirements.txt
+
+      - name: Validate source
+        run: npm run check
+
+      - name: Build packages
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          python tools/build.py --clean --version "$VERSION"
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/prettify.apkg
+            dist/themes/*/prettify-*.apkg
+            dist/themes/*/notetypes/prettify-*.apkg
+            dist/prettify-templates-*.zip
+            dist/manifest.json
