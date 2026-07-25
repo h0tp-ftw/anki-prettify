@@ -15,9 +15,9 @@
 
 ## See it in motion
 
-![Live Anki Prettify preview and editor walkthrough](res/gifs/preview-editor.gif)
+![HD cursor-guided Anki Prettify preview and editor walkthrough](res/gifs/preview-editor-cursor-v2-hd.gif)
 
-The walkthrough shows live field editing, light and night modes, desktop and mobile layouts, front/back rendering, progressive image zoom, fullscreen cleanup, and Cloze rendering. Try it yourself in the **[hosted preview and editor](https://h0tp-ftw.github.io/anki-prettify/)**.
+The cursor-guided walkthrough shows live field editing, light and night modes, desktop and mobile layouts, front/back rendering, numbered progressive image zoom, fullscreen cleanup, and Cloze rendering. Try it yourself in the **[hosted preview and editor](https://h0tp-ftw.github.io/anki-prettify/)**.
 
 ## What this fork is
 
@@ -195,13 +195,13 @@ npm run test:browser
 npm run test:e2e
 ```
 
-Regenerate the README walkthrough GIF after meaningful preview changes:
+Regenerate the HD cursor-guided README walkthrough after meaningful preview changes:
 
 ```powershell
-npm run preview:capture
+npm run preview:capture:cursor:v2:hd
 ```
 
-This command launches the local preview in Playwright and uses `ffmpeg` to write `res/gifs/preview-editor.gif`.
+This command launches the local preview in Playwright and uses `ffmpeg` to write the native-resolution `res/gifs/preview-editor-cursor-v2-hd.gif`. The lower-resolution capture commands remain available for smaller alternate assets.
 
 - `npm run check` validates templates, renderer behavior, runtime syntax, and SCSS/CSS synchronization.
 - `npm run test:browser` exercises a smoke matrix in an installed Chrome, Chromium, or Edge browser.
