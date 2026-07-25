@@ -1,166 +1,153 @@
-# Prettify
+<div align="center">
 
-Collection of customizable Anki flashcard templates with modern and clean themes.
+# Anki Prettify — Nord × Catppuccin
 
-![Prettify Cover](res/images/prettify-cover.png)
+**An opinionated, Nord-focused fork of [Prettify](https://github.com/pranavdeshai/anki-prettify) with richer card interactions, safer Anki webview behavior, reproducible packages, and a live browser editor.**
 
-# Contents
+[Live preview and editor](https://h0tp-ftw.github.io/anki-prettify/) · [Download all note types](https://github.com/h0tp-ftw/anki-prettify/raw/main/prettify.apkg) · [View releases](https://github.com/h0tp-ftw/anki-prettify/releases)
 
-- [About](#about)
-- [Features](#features)
-- [Themes](#themes)
-- [Instructions](#instructions)
-- [Add-on support](#add-on-support)
-- [Compatibility](#compatibility)
-- [Requirements](#requirements)
-- [Development](#development)
-- [Plans for future](#plans-for-future)
-- [Support development](#support-development)
+[![CI](https://github.com/h0tp-ftw/anki-prettify/actions/workflows/ci.yml/badge.svg)](https://github.com/h0tp-ftw/anki-prettify/actions/workflows/ci.yml)
+[![Preview site](https://github.com/h0tp-ftw/anki-prettify/actions/workflows/preview-pages.yml/badge.svg)](https://github.com/h0tp-ftw/anki-prettify/actions/workflows/preview-pages.yml)
 
-## About
+</div>
 
-Designed all the way from scratch, the goal is to make flashcards much more interesting to look at and reduce distractions, all while preserving the robust functionality Anki offers or even improving upon it.
+![Nord theme cover](res/images/nord-cover.png)
 
-## Features
+## What this fork is
 
-### Responsive design
+This repository is not the unchanged upstream multi-theme collection. It is a maintained, deliberately narrower variant built around the existing **Nord** package name and note-type IDs.
 
-Supported on desktop, mobile and web!
+The visual treatment combines Nord neutrals with Catppuccin-inspired Latte and Mocha accents, Rubik typography, cleaner spacing, stronger light/night-mode contrast, and a more interactive card runtime. Dracula and Minimal were removed so the repository can focus on one cohesive theme rather than several lightly maintained variants.
 
-![Responsive design](res/images/prettify-responsive.png)
+Three note types are included:
 
-### Image expansion to card width on hover
+- **Basic**
+- **Basic + Reverse**
+- **Cloze**
 
-![Image expansion 1](res/gifs/images-1.gif)
+## What changed in this variant
 
-### Image expansion to screen width on click
+### Refined presentation
 
-![Image expansion 2](res/gifs/images-2.gif)
+- Responsive desktop, mobile, and AnkiWeb-friendly layouts
+- Separate light and night-mode palettes
+- Nord surfaces with Catppuccin-inspired accent colors
+- Rubik-first font stack with Arial and system fallbacks
+- Improved tables, code blocks, links, lists, cloze text, and authored inline formatting
+- High-contrast and reduced-motion accommodations
 
-### Tags for quick context
+### Better card context
 
-![Tags](res/gifs/tags.gif)
+- Nested deck names become animated breadcrumbs
+- Tags become compact pills
+- Parent tag paths appear as tooltips instead of taking over the card
+- Front/back content receives restrained reveal animations without replaying every time the same review webview is reused
 
-### Breadcrumbs to current deck
+### Image controls
 
-![Breadcrumbs](res/images/breadcrumbs.png)
+- Hover enlargement for quick inspection
+- Progressive click zoom at 65%, 80%, and full screen
+- Full-screen backdrop with click-to-close and `Escape` support
+- Per-card contrast toggle for transparent or low-contrast images
+- Independent state for multiple images
+- Preservation of note-authored inline image styles
 
-### More useful features
+### Safer runtime behavior
 
-- Dark and light themes
-- Customizable color palettes
-- Preferences for tweaking styles
-- Fast rendering using CSS with minimal JavaScript
+Anki can reuse the same document across several reviews. The shared runtime explicitly cleans up observers, keyboard listeners, image clones, backdrop state, and other handlers before initializing the next card. This avoids duplicate controls and stale state after repeated reviews.
 
-## Themes
+Whitespace cleanup is intentionally conservative: only empty nodes at field edges are removed, so deliberate line breaks, code formatting, tables, and media remain intact.
 
-| Theme                                    | Download                               | Font                                             |
-| ---------------------------------------- | -------------------------------------- | ------------------------------------------------ |
-| ![Nord cover](res/images/nord-cover.png) | [Nord](themes/nord/prettify-nord.apkg) | [Rubik](https://fonts.google.com/specimen/Rubik) |
+## Try it before installing
 
-## Instructions
+Open the **[hosted preview and editor](https://h0tp-ftw.github.io/anki-prettify/)** to:
 
-### Installation
+- Switch between Basic, Basic + Reverse, and Cloze
+- Preview front and back cards
+- Test desktop/mobile and light/night-mode rendering
+- Edit Deck, Front, Back, Text, Back Extra, and Tags live
+- Experiment with the current HTML template and theme CSS
+- Copy rendered or declarative template source
+- Run the interaction smoke test and inspect runtime diagnostics
 
-#### Direct download (Recommended)
+Browser edits stay in the current tab. They do not modify this repository or save back to GitHub.
 
-- Click on link in the above table to download the deck with the specific theme.
+## Screenshots
 
-- Download [`prettify.apkg`](https://github.com/h0tp-ftw/anki-prettify/raw/main/prettify.apkg) to install every included note type in one master deck.
+| Light | Night mode |
+| --- | --- |
+| ![Nord light desktop](res/images/nord-light.png) | ![Nord dark desktop](res/images/nord-dark.png) |
+| ![Nord light mobile](res/images/nord-light-mobile.png) | ![Nord dark mobile](res/images/nord-dark-mobile.png) |
 
-- To download decks for specific note type, choose the note type folder from the `notetypes` directory under the theme directory. (`themes/THEME/notetypes/NOTETYPE`)
+## Downloads
 
-> **Note**: Download links to accompanying fonts to themes are provided above. Refer to [Anki Manual - Installing Fonts](https://docs.ankiweb.net/templates/styling.html#installing-fonts) for instructions.
+| Package | Includes | Download |
+| --- | --- | --- |
+| Complete package | Basic, Basic + Reverse, and Cloze | [Download `prettify.apkg`](https://github.com/h0tp-ftw/anki-prettify/raw/main/prettify.apkg) |
+| Nord bundle | All three Nord note types | [Download `prettify-nord.apkg`](https://github.com/h0tp-ftw/anki-prettify/raw/main/themes/nord/prettify-nord.apkg) |
+| Basic | One front/back card template | [Download Basic](https://github.com/h0tp-ftw/anki-prettify/raw/main/themes/nord/notetypes/prettify-nord-basic.apkg) |
+| Basic + Reverse | Forward and reverse cards | [Download Basic + Reverse](https://github.com/h0tp-ftw/anki-prettify/raw/main/themes/nord/notetypes/prettify-nord-basic_reverse.apkg) |
+| Cloze | Cloze card with Back Extra | [Download Cloze](https://github.com/h0tp-ftw/anki-prettify/raw/main/themes/nord/notetypes/prettify-nord-cloze.apkg) |
 
-#### Manual method
+The complete package and Nord bundle currently contain the same three note types because this fork intentionally ships one theme.
 
-The source templates in [`src/templates`](src/templates/default/) intentionally contain a shared-runtime marker. Use the ready-to-paste files produced by the build instead:
+## Install in Anki
 
-```powershell
-py tools\build.py --clean
-```
+1. Download the complete package, the Nord bundle, or an individual note type above.
+2. In Anki, choose **Import File**. On AnkiDroid, use **⋮ → Import**.
+3. Select the downloaded `.apkg` file.
+4. Use the imported `Prettify` note types directly, or clone them before making permanent changes.
 
-Then:
+> Importing a newer package can overwrite matching note-type templates and styling. Clone customized note types before updating so your edits are not lost.
 
-1. Create a new note type (See [Adding a note type](https://docs.ankiweb.net/editing.html#adding-a-note-type)).
-2. Click `Cards` in browser mode.
-3. Copy the matching files from `dist/templates/default/` into the _Front_ and _Back_ editors.
-4. Copy `dist/styles/css/nord.css` into _Styling_.
-5. Alternatively, use `dist/prettify-templates-vVERSION.zip`, which contains the same self-contained HTML and CSS.
+### Rubik font
 
-### Usage
+The hosted preview self-hosts Rubik and does not depend on Google Fonts. Inside Anki, the stylesheet first looks for a locally installed Rubik family and then for these files in Anki's media collection:
 
-1. Download the deck package
-2. Open Anki and click on `Import File` (`⋮` -> `Import` in AnkiDroid)
-3. Select the downloaded file
-4. The new note type(s), `THEME-NOTETYPE` should be created automatically
-5. Use the note type(s) or [clone](https://docs.ankiweb.net/editing.html#adding-a-note-type) to adapt to your needs
+- `_Rubik-Regular.woff2`
+- `_Rubik-Bold.woff2`
+- `_Rubik-Italic.woff2`
+- `_Rubik-BoldItalic.woff2`
 
-### Update
+The `.apkg` files do not currently bundle these font assets. Without a local Rubik installation or matching Anki media files, cards fall back to Arial or the platform UI font. See the [Anki manual's custom-font instructions](https://docs.ankiweb.net/templates/styling.html#installing-fonts) when an exact Rubik match is important.
 
-To update to the latest version of Prettify (themes/note types), just download the required decks again from the [repository](https://github.com/h0tp-ftw/anki-prettify).
+## Optional add-on compatibility
 
-> **Warning**: The already existing templates and styles will be _overwritten_ once you import the deck with updated content. To avoid any loss of edits, it is highly recommended that you use clones of the downloaded note types. (Refer to [Anki manual - Adding a note type](https://docs.ankiweb.net/editing.html#adding-a-note-type) for instructions on cloning a note type).
-
-## Add-on support
-
-The following add-ons are currently supported
+The templates retain support for:
 
 - [Clickable Tags](https://ankiweb.net/shared/info/1739176371)
-- [Edit Field During Review (Cloze)](https://ankiweb.net/shared/info/385888438)
+- [Edit Field During Review — Cloze](https://ankiweb.net/shared/info/385888438)
 
-> **Note**: Add-ons are optional and not necessary. The templates work as expected _with or without_ the add-ons.
+Both add-ons are optional. The cards render and behave normally without them.
 
-## Compatibility
+## Customize the cards
 
-Tested on
+The easiest place to experiment is the [live editor](https://h0tp-ftw.github.io/anki-prettify/). For permanent Anki changes, clone the imported note type and edit it through **Cards**.
 
-- **Desktop**: Anki 2.1.49+ (Mac)
-- **Mobile**: AnkiDroid 2.15+
-- **Browsers** (AnkiWeb): Chrome (97.0.4692.71+), Safari (15.0+)
+The main theme preferences are near the top of [`src/styles/scss/nord.scss`](src/styles/scss/nord.scss):
 
-> **Note**: Although tested on relatively newer versions of Anki, all the themes should work as expected with all versions of Anki 2.1+.
+```scss
+--card-max-width: 40em;
+--card-text-align: left;
+--font-size-regular: 18px;
+--font-size-small: 16px;
+--img-width: 50%;
+--img-brightness: 1;
+--img-filter: none;
+```
 
-## Requirements
+Source templates are declarative and contain a shared-runtime marker. For ready-to-paste, self-contained files, use the generated output rather than copying directly from `src/templates`.
 
-- Anki 2.1 or higher (should work with Anki 2.0)
-
-## Development
-
-**Hosted preview:** https://h0tp-ftw.github.io/anki-prettify/
-
-The repository includes a browser harness that renders the checked-in Anki templates and compiled CSS directly. It supports Basic, Basic + Reverse, and Cloze cards; front and back sides; light and night mode; desktop and mobile dimensions; rich fixtures; live field/template/CSS editing; self-hosted Rubik fonts; same-webview card changes; source-copy actions; runtime diagnostics; and an interaction smoke test.
+## Manual build and installation
 
 ### First-time setup
 
 ```powershell
-npm install
+npm ci
 py -m venv .venv
 .\.venv\Scripts\python -m pip install -r tools\requirements.txt
 npx playwright install chromium
 ```
-
-### Helpful VS Code actions
-
-Open **Terminal → Run Task** to start the preview, run fast checks, exercise the browser smoke matrix, launch Playwright, export manual templates, or build versioned release artifacts. The repository also recommends the Playwright and Python extensions.
-
-### Preview cards
-
-```powershell
-npm run preview
-```
-
-Open `http://127.0.0.1:4173/tools/preview/`. Changes under `src/templates`, `src/runtime`, `src/styles`, and `tools/preview` reload automatically. The **Live content** controls update note fields immediately, while the advanced **Source editor** lets you experiment with the selected template and theme CSS. Browser edits remain in the current tab and can be restored with the reset buttons; they do not write to the repository. The **Next card in same webview** action is useful for finding event-listener and state leaks that only appear after several Anki reviews.
-
-### Validate changes
-
-```powershell
-npm run check
-npm run test:browser
-npm run test:e2e
-```
-
-`npm run check` validates the shared runtime, template markers, renderer behavior, and SCSS/CSS synchronization. `npm run test:browser` uses an installed Chrome, Chromium, or Edge for a quick real-browser interaction check. The Playwright suite exercises the full card matrix, live field/template/CSS editing and resets, image zoom, Escape cleanup, mobile/night-mode classes, and repeated card renders in one webview.
 
 ### Build packages
 
@@ -168,27 +155,59 @@ npm run test:e2e
 npm run package -- --clean --version 1.0
 ```
 
-The npm wrapper prefers `.venv` automatically and falls back to an available Python installation.
+Generated files are written to `dist/` without rewriting tracked source files. Output includes:
 
-Generated output is written to `dist/`: theme packages, note-type packages, the master `prettify.apkg`, a manifest, self-contained manual templates, compiled CSS, and `prettify-templates-vVERSION.zip`. Packaging verifies the note/card counts inside every `.apkg` and does not rewrite source templates, SCSS, CSS, IDs, or tracked release files.
+- A master `prettify.apkg`
+- Theme and note-type `.apkg` packages
+- Ready-to-paste front/back HTML
+- Compiled theme CSS
+- `prettify-templates-vVERSION.zip`
+- A build manifest
 
-### Releases and hosted preview
+To install manually:
 
-Pushing a tag such as `v1.0.1` validates the source, builds the packages, and attaches them to a GitHub release. Every push to `main` exports the same harness to GitHub Pages at `https://h0tp-ftw.github.io/anki-prettify/`; enable **GitHub Actions** as the Pages source once in the repository settings.
+1. Choose a matching pair under `dist/templates/default/`.
+2. Paste the files into Anki's **Front Template** and **Back Template** editors.
+3. Paste `dist/styles/css/nord.css` into **Styling**.
+4. Add Rubik font files separately when required.
 
-## Plans for future
+## Development
 
-- [x] ~~New theme~~
-- [ ] Documentation
-- [ ] "Type in the answer" note type
-- [ ] Out of the box support for popular note types (E.g. AnKing note types)
-- [ ] More themes!
+Start the local preview:
 
-## Support development
+```powershell
+npm run preview
+```
 
-If you like my work, you can support the development by
+Open `http://127.0.0.1:4173/tools/preview/`. Changes under `src/templates`, `src/runtime`, `src/styles`, and `tools/preview` reload automatically.
 
-- Starring the project on GitHub
-- Following me on GitHub
-- [Buying me a coffee](https://www.buymeacoffee.com/pranavdeshai)
-- Donating on [Ko-fi](https://ko-fi.com/pranavdeshai)
+Run validation:
+
+```powershell
+npm run check
+npm run test:browser
+npm run test:e2e
+```
+
+- `npm run check` validates templates, renderer behavior, runtime syntax, and SCSS/CSS synchronization.
+- `npm run test:browser` exercises a smoke matrix in an installed Chrome, Chromium, or Edge browser.
+- `npm run test:e2e` runs the full Playwright interaction suite.
+
+Every push to `main` validates and exports the preview to GitHub Pages. Version tags such as `v1.0.1` build verified packages and attach them to a GitHub release.
+
+See [`tools/README.md`](tools/README.md) for build-system details.
+
+## Compatibility
+
+The templates target modern Anki 2.1+ rendering environments and responsive mobile/web layouts. Automated browser coverage runs in Chromium and exercises every included note type and card side, dark/mobile classes, repeated same-webview renders, image interactions, live editing, font loading, and source resets.
+
+Anki clients differ in webview behavior and supported CSS. Test customized templates on the clients you use before replacing an established note type.
+
+## Upstream, attribution, and licenses
+
+This project is a fork of [Prettify by Deshai Pranav](https://github.com/pranavdeshai/anki-prettify). The original concept, templates, and earlier theme work remain credited in source headers and the repository license. This fork's Nord/Catppuccin styling, runtime changes, packaging, preview editor, and test infrastructure are maintained by [@h0tp-ftw](https://github.com/h0tp-ftw).
+
+- Project code: [MIT License](LICENSE)
+- Rubik: [SIL Open Font License 1.1](https://openfontlicense.org/)
+- Nord palette: [Nord](https://www.nordtheme.com/)
+- Catppuccin palette inspiration: [Catppuccin](https://catppuccin.com/)
