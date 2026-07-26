@@ -11,13 +11,11 @@
 
 </div>
 
-![Nord theme cover](res/images/nord-cover.png)
-
-## See it in motion
+## See the fork in motion
 
 ![Cursor-guided Anki Prettify preview and editor walkthrough](res/gifs/preview-editor-cursor-v2-crisp.gif)
 
-The walkthrough uses a README-native composition so the card text remains crisp instead of being downscaled by GitHub. It shows live field editing, light and night modes, desktop and mobile layouts, front/back rendering, numbered progressive image zoom, fullscreen cleanup, and Cloze rendering. Try it yourself in the **[hosted preview and editor](https://h0tp-ftw.github.io/anki-prettify/)**.
+This walkthrough is captured from this fork's real preview and editor—not inherited theme artwork. It shows live field editing, light and night modes, desktop and mobile layouts, front/back rendering, numbered progressive image zoom, fullscreen cleanup, and Cloze rendering. Try it yourself in the **[hosted preview and editor](https://h0tp-ftw.github.io/anki-prettify/)**.
 
 ## What this fork is
 
@@ -77,13 +75,6 @@ Open the **[hosted preview and editor](https://h0tp-ftw.github.io/anki-prettify/
 - Run the interaction smoke test and inspect runtime diagnostics
 
 Browser edits stay in the current tab. They do not modify this repository or save back to GitHub.
-
-## Screenshots
-
-| Light | Night mode |
-| --- | --- |
-| ![Nord light desktop](res/images/nord-light.png) | ![Nord dark desktop](res/images/nord-dark.png) |
-| ![Nord light mobile](res/images/nord-light-mobile.png) | ![Nord dark mobile](res/images/nord-dark-mobile.png) |
 
 ## Downloads
 
